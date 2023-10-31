@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: pytest",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "justMyCode": true
+    },
+    {
+      "name": "QGIS: Remote Attach",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/grm",
+          "remoteRoot": "C:/Users/${env:USERNAME}/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/grm"
+        }
+      ]
+    }
+  ]
+}
