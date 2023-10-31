@@ -8,9 +8,9 @@
 
 """
 
-__author__ = 'info@hermesys.co.kr'
-__date__ = '2019-03-13'
-__copyright__ = 'Copyright 2019, KICT, Hermesys'
+__author__ = "info@hermesys.co.kr"
+__date__ = "2019-03-13"
+__copyright__ = "Copyright 2019, KICT, Hermesys"
 
 import unittest
 
@@ -19,6 +19,7 @@ from PyQt5.QtGui import QDialogButtonBox, QDialog
 from drainage_dialog import DrainageDialog
 
 from utilities import get_qgis_app
+
 QGIS_APP = get_qgis_app()
 
 
@@ -48,8 +49,8 @@ class DrainageDialogTest(unittest.TestCase):
         result = self.dialog.result()
         self.assertEqual(result, QDialog.Rejected)
 
+
 if __name__ == "__main__":
     suite = unittest.makeSuite(DrainageDialogTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
-

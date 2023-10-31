@@ -29,34 +29,40 @@ from .Util import *
 from PyQt5 import QtGui, uic
 
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'Stream_Definition_dialog_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "Stream_Definition_dialog_base.ui")
+)
 
-_layerPath=""
+_layerPath = ""
 _util = util()
-class Stream_DefinitionDialog(QDialog, FORM_CLASS):
 
+
+class Stream_DefinitionDialog(QDialog, FORM_CLASS):
     # 저장 위치 출력 다이얼 로그
     def Select_Ouput_File(self):
-        self.txtOutput.clear();
+        self.txtOutput.clear()
         dir = os.path.dirname(_layerPath)
-        filename = QFileDialog.getSaveFileName(self, "select output file ", dir, "*.tif")
+        filename = QFileDialog.getSaveFileName(
+            self, "select output file ", dir, "*.tif"
+        )
         self.txtOutput.setText(filename)
 
-    #콤보 박스에서 선택한 레이어의 경로 받아오기
+    # 콤보 박스에서 선택한 레이어의 경로 받아오기
     def Get_ComboBox_LayerPath(self):
         global _layerPath
-        if self.cmbLayers.currentIndex()!=0:
-            _layerPath=_util.GetcomboSelectedLayerPath(self.cmbLayers)
+        if self.cmbLayers.currentIndex() != 0:
+            _layerPath = _util.GetcomboSelectedLayerPath(self.cmbLayers)
 
         # 선택된 레이어 한글 경로 있는지 확인
         if _util.CheckKorea(_layerPath):
             self.cmbLayers.setCurrentIndex(0)
-            _util.MessageboxShowInfo("Stream Definition", "\n The selected layer contains Korean paths. \n")
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n The selected layer contains Korean paths. \n"
+            )
 
     # 레이어 목록 Qgis에 올리기
     def Addlayer_OutputFile(self, outputpath):
-        if (os.path.isfile(outputpath)):
+        if os.path.isfile(outputpath):
             fileName = outputpath
             fileInfo = QFileInfo(fileName)
             baseName = fileInfo.baseName()
@@ -72,61 +78,65 @@ class Stream_DefinitionDialog(QDialog, FORM_CLASS):
             return
 
         # 텍스트 박스에 결과 파일 경로가 없을때 오류 메시지 출력
-        if self.txtOutput.text() == '':
-            _util.MessageboxShowInfo("Stream Definition", "\n File path not selected. \n")
+        if self.txtOutput.text() == "":
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n File path not selected. \n"
+            )
             self.txtOutput.setFocus()
             return
 
             # 확장자 TIF 만 허용
         filename = os.path.splitext(self.txtOutput.text())[1]
         if filename.upper() != ".TIF":
-            _util.MessageboxShowInfo("Stream Definition", "\n Only TIF extensions are allowed. \n")
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n Only TIF extensions are allowed. \n"
+            )
             self.txtOutput.setFocus()
             return
 
-
-
-
-
             # True 면 한글 포함 하고 있음, False 면 한글 없음
         if _util.CheckKorea(self.txtOutput.text()):
-            _util.MessageboxShowInfo("Stream Definition", "\n The file path contains Korean. \n")
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n The file path contains Korean. \n"
+            )
             return
 
         if _util.CheckFile(self.txtOutput.text()):
             # True 이면 기존 파일 존재함
-            _util.MessageboxShowInfo("Stream Definition", "\n A file with the same name already exists. \n")
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n A file with the same name already exists. \n"
+            )
             return
 
         cellvalue = self.txtCellValue.text()
-        if cellvalue.isnumeric()==False:
-            _util.MessageboxShowInfo("Stream Definition","\n  Cell values only be numeric.\n")
+        if cellvalue.isnumeric() == False:
+            _util.MessageboxShowInfo(
+                "Stream Definition", "\n  Cell values only be numeric.\n"
+            )
             return
 
-
         # 역슬러시 문제로 오류 났었음 한참 고생 ㅜㅜ
-        cellValue=self.txtCellValue.text()
-        arg = _util.GetTaudemArg(_layerPath, self.txtOutput.text(), _util.tauDEMCommand.ST, False,cellValue)
+        cellValue = self.txtCellValue.text()
+        arg = _util.GetTaudemArg(
+            _layerPath, self.txtOutput.text(), _util.tauDEMCommand.ST, False, cellValue
+        )
         # _util.MessageboxShowInfo("arg",arg)
         returnValue = _util.Execute(arg)
         if returnValue == 0:
             self.Addlayer_OutputFile(self.txtOutput.text())
-            _util.MessageboxShowInfo("Stream Definition","processor complete")
+            _util.MessageboxShowInfo("Stream Definition", "processor complete")
             self.close()
-
 
     def Close_Form(self):
         self.close()
-
 
     def __init__(self, parent=None):
         """Constructor."""
         super(Stream_DefinitionDialog, self).__init__(parent)
         self.setupUi(self)
 
-        #다이얼 로그 창 사이즈 조절 못하게 고정
+        # 다이얼 로그 창 사이즈 조절 못하게 고정
         self.setFixedSize(self.size())
-
 
         # LineEdit 컨트롤러 초기화
         self.txtOutput.clear()
@@ -140,8 +150,6 @@ class Stream_DefinitionDialog(QDialog, FORM_CLASS):
 
         # 전달인자 layer 목록, 콤보박스,layertype("tif" or "shp" or ""-->전체 목록)
         _util.SetCommbox(layers, self.cmbLayers, "tif")
-
-
 
         # 다이얼 로그 버튼 눌렀을때 파일 저장 경로 설정 이벤트
         self.btnOpenDialog.clicked.connect(self.Select_Ouput_File)

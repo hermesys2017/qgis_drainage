@@ -27,9 +27,11 @@ from PyQt5.QtWidgets import QAction
 
 # Initialize Qt resources from file resources.py
 from .resources import *
+
 # Import the code for the dialog
 from .Drainage_dockwidget import DrainageDockWidget
 import os.path
+
 
 class Drainage:
     """QGIS Plugin Implementation."""
@@ -47,22 +49,21 @@ class Drainage:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'Drainage_{}.qm'.format(locale))
+            self.plugin_dir, "i18n", "Drainage_{}.qm".format(locale)
+        )
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
 
-            if qVersion() > '4.3.3':
+            if qVersion() > "4.3.3":
                 QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Drainage')
+        self.menu = self.tr("&Drainage")
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -81,8 +82,7 @@ class Drainage:
         :rtype: QString
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('Drainage', message)
-
+        return QCoreApplication.translate("Drainage", message)
 
     def add_action(
         self,
@@ -94,7 +94,8 @@ class Drainage:
         add_to_toolbar=True,
         status_tip=None,
         whats_this=None,
-        parent=None):
+        parent=None,
+    ):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -150,9 +151,7 @@ class Drainage:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
-                self.menu,
-                action)
+            self.iface.addPluginToMenu(self.menu, action)
 
         self.actions.append(action)
 
@@ -161,24 +160,22 @@ class Drainage:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/drainage/icon.png'
+        icon_path = ":/plugins/drainage/icon.png"
         self.add_action(
             icon_path,
-            text=self.tr(u'Drainage'),
+            text=self.tr("Drainage"),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow(),
+        )
 
         # will be set False in run()
         self.first_start = True
-    
+
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&Drainage'),
-                action)
+            self.iface.removePluginMenu(self.tr("&Drainage"), action)
             self.iface.removeToolBarIcon(action)
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -187,17 +184,18 @@ class Drainage:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
-            self.dlg = DrainageDockWidget(iface = self.iface)
-            
+            self.dlg = DrainageDockWidget(iface=self.iface)
+
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
-            
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
+
+
 #         result = self.dlg.exec_()
-        # See if OK was pressed
+# See if OK was pressed
 #         if result:
 #             # Do something useful here - delete the line containing pass and
 #             # substitute with your code.
 #             pass
-    

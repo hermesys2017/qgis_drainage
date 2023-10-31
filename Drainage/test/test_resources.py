@@ -8,14 +8,13 @@
 
 """
 
-__author__ = 'info@hermesys.co.kr'
-__date__ = '2019-03-13'
-__copyright__ = 'Copyright 2019, KICT, Hermesys'
+__author__ = "info@hermesys.co.kr"
+__date__ = "2019-03-13"
+__copyright__ = "Copyright 2019, KICT, Hermesys"
 
 import unittest
 
 from PyQt5.QtGui import QIcon
-
 
 
 class DrainageDialogTest(unittest.TestCase):
@@ -31,14 +30,12 @@ class DrainageDialogTest(unittest.TestCase):
 
     def test_icon_png(self):
         """Test we can click OK."""
-        path = ':/plugins/Drainage/icon.png'
+        path = ":/plugins/Drainage/icon.png"
         icon = QIcon(path)
         self.assertFalse(icon.isNull())
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(DrainageResourcesTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
-
-
-

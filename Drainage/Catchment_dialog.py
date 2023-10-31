@@ -27,26 +27,28 @@ from PyQt5 import QtGui, uic
 from .Util import *
 from qgis.core import QgsProject, QgsRasterLayer
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'Catchment_dialog_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "Catchment_dialog_base.ui")
+)
 
-_comboPathTemp=""
-_layerPath =""
+_comboPathTemp = ""
+_layerPath = ""
 _Input_Layer_Path = ""
-_FD_Layer_Path =""
+_FD_Layer_Path = ""
 _FA_Layer_Path = ""
 _Stream_Layer_Path = ""
 _util = util()
 
+
 class CatchmentDialog(QDialog, FORM_CLASS):
     # 저장 위치 출력 다이얼 로그
     def Select_Ouput_File(self):
-        self.txtOutput.clear();
+        self.txtOutput.clear()
         dir = os.path.dirname(_Input_Layer_Path)
-        filename = QFileDialog.getSaveFileName(self, "select output file ", dir, "*.tif")
+        filename = QFileDialog.getSaveFileName(
+            self, "select output file ", dir, "*.tif"
+        )
         self.txtOutput.setText(filename)
-
-
 
     # 콤보 박스에서 선택한 레이어의 경로 받아오기
     def Get_ComboBox_LayerPath(self, combobox, layername):
@@ -57,33 +59,41 @@ class CatchmentDialog(QDialog, FORM_CLASS):
                 # 선택된 레이어 한글 경로 있는지 확인
                 if _util.CheckKorea(_Input_Layer_Path):
                     combobox.setCurrentIndex(0)
-                    _util.MessageboxShowInfo("Catchment", "\n The selected layer contains Korean paths. \n")
+                    _util.MessageboxShowInfo(
+                        "Catchment", "\n The selected layer contains Korean paths. \n"
+                    )
             elif layername == "cmbFDLayer":
                 _FD_Layer_Path = _util.GetcomboSelectedLayerPath(combobox)
                 # 선택된 레이어 한글 경로 있는지 확인
                 if _util.CheckKorea(_FD_Layer_Path):
                     combobox.setCurrentIndex(0)
-                    _util.MessageboxShowInfo("Catchment", "\n The selected layer contains Korean paths. \n")
+                    _util.MessageboxShowInfo(
+                        "Catchment", "\n The selected layer contains Korean paths. \n"
+                    )
             elif layername == "cmbFALayer":
                 _FA_Layer_Path = _util.GetcomboSelectedLayerPath(combobox)
                 # 선택된 레이어 한글 경로 있는지 확인
                 if _util.CheckKorea(_FA_Layer_Path):
                     combobox.setCurrentIndex(0)
-                    _util.MessageboxShowInfo("Catchment", "\n The selected layer contains Korean paths. \n")
+                    _util.MessageboxShowInfo(
+                        "Catchment", "\n The selected layer contains Korean paths. \n"
+                    )
             elif layername == "cmbSGLayer":
                 _Stream_Layer_Path = _util.GetcomboSelectedLayerPath(combobox)
                 # 선택된 레이어 한글 경로 있는지 확인
                 if _util.CheckKorea(_Stream_Layer_Path):
                     combobox.setCurrentIndex(0)
-                    _util.MessageboxShowInfo("Catchment", "\n The selected layer contains Korean paths. \n")
+                    _util.MessageboxShowInfo(
+                        "Catchment", "\n The selected layer contains Korean paths. \n"
+                    )
 
     # 레이어 목록 Qgis에 올리기
     def Addlayer_OutputFile(self, outputpath):
-        if (os.path.isfile(outputpath)):
+        if os.path.isfile(outputpath):
             fileName = outputpath
             fileInfo = QFileInfo(fileName)
             baseName = fileInfo.baseName()
-            layer= QgsRasterLayer(fileName, baseName, "gdal")
+            layer = QgsRasterLayer(fileName, baseName, "gdal")
             QgsProject.instance().addMapLayer(layer)
 
     def Click_Okbutton(self):
@@ -100,7 +110,7 @@ class CatchmentDialog(QDialog, FORM_CLASS):
             self.cmbFDLayer.setFocus()
             return
 
-        index2= self.cmbFALayer.currentIndex()
+        index2 = self.cmbFALayer.currentIndex()
         if index2 == 0:
             _util.MessageboxShowInfo("Catchment", "\n No layer selected. \n")
             self.cmbFALayer.setFocus()
@@ -113,39 +123,47 @@ class CatchmentDialog(QDialog, FORM_CLASS):
             return
 
         # 텍스트 박스에 결과 파일 경로가 없을때 오류 메시지 출력
-        if self.txtOutput.text() == '':
+        if self.txtOutput.text() == "":
             _util.MessageboxShowInfo("Catchment", "\n File path not selected. \n")
             self.txtOutput.setFocus()
             return
 
-
         # 확장자 TIF 만 허용
         filename = os.path.splitext(self.txtOutput.text())[1]
-        if filename.upper() !=".TIF":
-            _util.MessageboxShowInfo("Catchment", "\n Only TIF extensions are allowed. \n")
+        if filename.upper() != ".TIF":
+            _util.MessageboxShowInfo(
+                "Catchment", "\n Only TIF extensions are allowed. \n"
+            )
             self.txtOutput.setFocus()
             return
 
-
-
         # True 면 한글 포함 하고 있음, False 면 한글 없음
         if _util.CheckKorea(self.txtOutput.text()):
-            _util.MessageboxShowInfo("Catchment", "\n The file path contains Korean. \n")
+            _util.MessageboxShowInfo(
+                "Catchment", "\n The file path contains Korean. \n"
+            )
             return
 
         # True 이면 기존 파일 존재함
         if _util.CheckFile(self.txtOutput.text()):
-            _util.MessageboxShowInfo("Catchment", "\n A file with the same name already exists. \n")
+            _util.MessageboxShowInfo(
+                "Catchment", "\n A file with the same name already exists. \n"
+            )
             return
 
-        arg = _util.GetCacthmentsArg(_Input_Layer_Path,_FD_Layer_Path,_FA_Layer_Path,_Stream_Layer_Path,self.txtOutput.text())
+        arg = _util.GetCacthmentsArg(
+            _Input_Layer_Path,
+            _FD_Layer_Path,
+            _FA_Layer_Path,
+            _Stream_Layer_Path,
+            self.txtOutput.text(),
+        )
         returnValue = _util.Execute(arg)
         if returnValue == 0:
             self.Addlayer_OutputFile(self.txtOutput.text())
-            _util.MessageboxShowInfo("Catchment","processor complete")
-            
+            _util.MessageboxShowInfo("Catchment", "processor complete")
+
         self.Close_Form()
-            
 
     def Close_Form(self):
         self.close()
@@ -154,7 +172,7 @@ class CatchmentDialog(QDialog, FORM_CLASS):
         """Constructor."""
         super(CatchmentDialog, self).__init__(parent)
         self.setupUi(self)
-        #다이얼 로그 창 사이즈 조절 못하게 고정
+        # 다이얼 로그 창 사이즈 조절 못하게 고정
         self.setFixedSize(self.size())
         # LineEdit 컨트롤러 초기화
         self.txtOutput.clear()  # 유틸 객체 생성
@@ -170,17 +188,22 @@ class CatchmentDialog(QDialog, FORM_CLASS):
         _util.SetCommbox(layers, self.cmbFALayer, "tif")
         _util.SetCommbox(layers, self.cmbSGLayer, "tif")
 
-
-
-
         # 다이얼 로그 버튼 눌렀을때 파일 저장 경로 설정 이벤트
         self.btnOpenDialog.clicked.connect(self.Select_Ouput_File)
 
         # 선택 레이어 경로 받아서 글로벌 변수에 넣어서 사용
-        self.cmbLayers.activated.connect(lambda: self.Get_ComboBox_LayerPath(self.cmbLayers, "cmbLayers"))
-        self.cmbFDLayer.activated.connect(lambda: self.Get_ComboBox_LayerPath(self.cmbFDLayer, "cmbFDLayer"))
-        self.cmbFALayer.activated.connect(lambda: self.Get_ComboBox_LayerPath(self.cmbFALayer, "cmbFALayer"))
-        self.cmbSGLayer.activated.connect(lambda: self.Get_ComboBox_LayerPath(self.cmbSGLayer, "cmbSGLayer"))
+        self.cmbLayers.activated.connect(
+            lambda: self.Get_ComboBox_LayerPath(self.cmbLayers, "cmbLayers")
+        )
+        self.cmbFDLayer.activated.connect(
+            lambda: self.Get_ComboBox_LayerPath(self.cmbFDLayer, "cmbFDLayer")
+        )
+        self.cmbFALayer.activated.connect(
+            lambda: self.Get_ComboBox_LayerPath(self.cmbFALayer, "cmbFALayer")
+        )
+        self.cmbSGLayer.activated.connect(
+            lambda: self.Get_ComboBox_LayerPath(self.cmbSGLayer, "cmbSGLayer")
+        )
 
         # OK버튼 눌렀을때 처리 부분
         self.btnOK.clicked.connect(self.Click_Okbutton)
