@@ -8,9 +8,9 @@
 
 [general]
 name=Drainage
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.10
 description= 
-version=0.1.1
+version=0.1.2
 author=KICT, Hermesys
 email=info@hermesys.co.kr
 
