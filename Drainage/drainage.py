@@ -21,22 +21,24 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction
+import os.path
 
-# Initialize Qt resources from file resources.py
-from .resources import *
+from qgis.gui import QgisInterface
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator, qVersion
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
-from .Drainage_dockwidget import DrainageDockWidget
-import os.path
+from drainage.Drainage_dockwidget import DrainageDockWidget
+
+# Initialize Qt resources from file resources.py
+from drainage.resources import *
 
 
 class Drainage:
     """QGIS Plugin Implementation."""
 
-    def __init__(self, iface):
+    def __init__(self, iface: QgisInterface):
         """Constructor.
 
         :param iface: An interface instance that will be passed to this class

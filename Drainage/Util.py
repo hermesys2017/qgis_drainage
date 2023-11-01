@@ -1,24 +1,14 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo
-from PyQt5.QtWidgets import QAction, QFileDialog, QLineEdit, QComboBox, QMessageBox
-from PyQt5.QtGui import QIcon
-from qgis.core import (
-    QgsProject,
-    QgsMessageLog,
-    QgsRasterLayer,
-    QgsVectorLayer,
-    QgsApplication,
-)
-from subprocess import call
-import sys
 import os
 import os.path
-import win32api
 import re
 import tempfile
-import numpy
+from subprocess import call
 
-_iface = {}
+import win32api
+from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.PyQt.QtCore import QFileInfo
+from qgis.PyQt.QtWidgets import QMessageBox
 
 
 class util:

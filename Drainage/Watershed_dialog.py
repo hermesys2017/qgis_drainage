@@ -20,31 +20,21 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtWidgets import (
-    QFileDialog,
-    QComboBox,
-    QDialog,
-    QMessageBox,
-    QGroupBox,
-    QTextEdit,
-)
-from PyQt5.QtCore import QFileInfo
-from qgis.gui import *
-from qgis.core import QgsVectorLayer, QgsRasterLayer, QgsProject
 import os
-from .Util import *
-from PyQt5 import QtGui, uic
 
-FORM_CLASS, _ = uic.loadUiType(
-    os.path.join(os.path.dirname(__file__), "Watershed_dialog_base.ui")
-)
+from qgis.core import QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.PyQt import QtCore, QtGui
+from qgis.PyQt.QtCore import QFileInfo
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QGroupBox, QMessageBox, QTextEdit
 
+from drainage.ui.Watershed_dialog_base import Ui_WatershedDialogBase
+from drainage.Util import util
 
 _Prj_Back_Path = ""
 _util = util()
 
 
-class WatershedDialog(QDialog, FORM_CLASS):
+class WatershedDialog(QDialog, Ui_WatershedDialogBase):
     # 저장 위치 출력 다이얼 로그
     def Select_Ouput_File(self):
         self.txtOutput.clear()
@@ -141,7 +131,7 @@ class WatershedDialog(QDialog, FORM_CLASS):
 
         """
         Watershed   진행 하기 전에 raster 파일과 shape 파일의 좌표계 정보가 다르면 
-        파일이 잘 생성 되지 않을수 있다는 메시지 출력        
+        파일이 잘 생성 되지 않을수 있다는 메시지 출력     
         """
 
         # 레스터 레이어
@@ -181,7 +171,7 @@ class WatershedDialog(QDialog, FORM_CLASS):
         else:
             return ""
 
-    def checkPrjFile(self, shapefile):
+    def checkPrjFile(self, shapefile: str):
         global _Prj_Back_Path
         file_ex = os.path.splitext(shapefile)
         ext = file_ex[1]

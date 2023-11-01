@@ -20,21 +20,19 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtWidgets import QFileDialog, QDialog
-from PyQt5.QtCore import QFileInfo, QObject
-from qgis.core import QgsProject, QgsRasterLayer
 import os
-from PyQt5 import QtGui, uic
-from .Util import *
 
-FORM_CLASS, _ = uic.loadUiType(
-    os.path.join(os.path.dirname(__file__), "Batch_Processor_dialog_base.ui")
-)
+from qgis.core import QgsProject, QgsRasterLayer
+from qgis.PyQt.QtCore import QFileInfo
+from qgis.PyQt.QtWidgets import QDialog
+
+from drainage.ui.Batch_Processor_dialog_base import Ui_WatershedDialogBase
+from drainage.Util import util
 
 _util = util()
 
 
-class BatchProcessor(QDialog, FORM_CLASS):
+class BatchProcessor(QDialog, Ui_WatershedDialogBase):
     # 레이어 목록 콤보 박스 셋팅
     def SetCombobox(self):
         layers = QgsProject.instance().mapLayers().values()

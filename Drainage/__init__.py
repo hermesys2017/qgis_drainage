@@ -32,6 +32,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .drainage import Drainage
+    from drainage.drainage import Drainage
 
     return Drainage(iface)
