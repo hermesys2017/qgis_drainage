@@ -21,8 +21,11 @@
  *                                                                         *
  ***************************************************************************/
 """
+import logging
 import os.path
+from datetime import datetime
 
+from qgis.core import Qgis
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
@@ -33,6 +36,7 @@ from drainage.Drainage_dockwidget import DrainageDockWidget
 
 # Initialize Qt resources from file resources.py
 from drainage.resources import *
+from drainage.Util import util
 
 
 class Drainage:
@@ -50,6 +54,40 @@ class Drainage:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+
+        # check required program
+        _util = util()
+        if not _util.is_installed_taudem():
+            self.iface.messageBar().pushMessage(
+                "Error",
+                "TauDEM is not installed. Please install TauDEM.",
+                level=Qgis.Critical,
+                duration=10,
+            )
+            return
+        elif not _util.is_installed_gdal_for_taudem():
+            self.iface.messageBar().pushMessage(
+                "Error",
+                "GDAL is not installed. Please install GDAL.",
+                level=Qgis.Critical,
+                duration=10,
+            )
+            return
+
+        # add gdal path in environment variable
+        _util.add_gdal_path()
+
+        # initialize log
+        path = os.path.join(self.plugin_dir, "log")
+        os.makedirs(path, exist_ok=True)
+        logging.basicConfig(
+            filename=os.path.join(
+                path,
+                f"{datetime.now().strftime('%Y%m%d_%H%M%S_start')}.log",
+            ),
+            level=logging.DEBUG,
+        )
+
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
@@ -178,6 +216,8 @@ class Drainage:
         for action in self.actions:
             self.iface.removePluginMenu(self.tr("&Drainage"), action)
             self.iface.removeToolBarIcon(action)
+
+        util().remove_gdal_path()
 
     def run(self):
         """Run method that performs all the real work"""
