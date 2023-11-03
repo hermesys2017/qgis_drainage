@@ -18,8 +18,8 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}/grm",
-          "remoteRoot": "C:/Users/${env:USERNAME}/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/grm"
+          "localRoot": "${workspaceFolder}/drainage",
+          "remoteRoot": "C:/Users/${env:USERNAME}/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/drainage"
         }
       ]
     }
