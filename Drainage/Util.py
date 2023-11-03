@@ -2,8 +2,8 @@
 import os
 import os.path
 import re
+import subprocess
 import tempfile
-from subprocess import call
 
 import win32api
 from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
@@ -11,7 +11,16 @@ from qgis.PyQt.QtCore import QFileInfo
 from qgis.PyQt.QtWidgets import QMessageBox
 
 
-class util:
+class Singleton(object):
+    _instance = None
+
+    def __new__(class_, *args, **kwargs):
+        if not isinstance(class_._instance, class_):
+            class_._instance = object.__new__(class_, *args, **kwargs)
+        return class_._instance
+
+
+class util(Singleton):
     def __init__(self):
         self.Input_Layer_Path = ""
         self.FillSink_Layer_Path = ""
@@ -30,15 +39,33 @@ class util:
         enums["reverse_mapping"] = reverse
         return type("Enum", (), enums)
 
+    def is_installed_taudem(self) -> bool:
+        return os.path.isdir(self.GetTaudemPath())
+
+    def is_installed_gdal_for_taudem(self) -> bool:
+        return os.path.isdir(self.get_gdal_path())
+
+    def add_gdal_path(self):
+        gdal_path = self.get_gdal_path()
+        os.environ["PATH"] += os.pathsep + gdal_path
+
+    def remove_gdal_path(self):
+        gdal_path = self.get_gdal_path()
+        os.environ["PATH"] = os.environ["PATH"].replace(os.pathsep + gdal_path, "")
+
     # Taudem path 받아 오기
     def GetTaudemPath(self):
         tauPath = "C:\\Program Files\\TauDEM\\TauDEM5Exe\\"
         return tauPath
 
+    # @property
+    def get_gdal_path(self):
+        gdal_path = "C:\\Program Files\\GDAL"
+        return gdal_path
+
     def Execute(self, arg):
-        CREATE_NO_WINDOW = 0x08000000
-        value = call(arg, creationflags=CREATE_NO_WINDOW)
-        return value
+        value = subprocess.run(arg, creationflags=subprocess.CREATE_NO_WINDOW)
+        return value.returncode
 
     # 각각의 기능별로 arg를 생성하고 반환 하는 기능
     def GetTaudemArg(self, inputfile, ouputfile, taudemcommand, facoption, optionvalue):
