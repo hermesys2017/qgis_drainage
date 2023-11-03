@@ -143,24 +143,6 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         )
         ReultFill = self.ExecuteArg(arg, self.Fill)
 
-        # Fill sink 후에 Flat 처리를 하면 실행이 안되는거 같음 확인 해야 할 문제
-
-        # # Fill sink 가 성공적으로 처리가 되었을때 다음 루틴 처리 진행
-        # if (ReultFill):
-        #     # Flat 처리 부분
-        #     # 1. fill sink tif 파일을 asc 로 변환
-        #     RetConvert_Fill=_util.Convert_TIFF_To_ASCii_retpaht(self.Fill)
-        #     # Flat 결과 파일
-        #     AscFlat = self.Flat.replace(".tif",".asc")
-        #
-        #     # 2. Fill sink Flat 실행
-        #     Flat_exe_Path = os.path.dirname(os.path.abspath(__file__)) + '\Flat\Flat.exe'
-        #     arg ='"' + Flat_exe_Path + '"' +' '+  RetConvert_Fill +' '+ AscFlat
-        #     # self.ExecuteArg(arg,RetConvert_Fill)
-        #     _util.MessageboxShowError("arg",arg)
-        #     # 3. Flat 결과를 Tiff 로 변환 처리
-        #     # _util.Convert_ASCii_To_TIFF(AscFlat,self.Flat)
-
         if ReultFill:
             # FD 시작
             arg = _util.GetTaudemArg(
