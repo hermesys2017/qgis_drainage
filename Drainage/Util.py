@@ -51,7 +51,7 @@ class util(Singleton):
 
     def remove_gdal_path(self):
         gdal_path = self.get_gdal_path()
-        os.environ["PATH"] = os.environ["PATH"].replace(os.pathsep + gdal_path, "")
+        os.environ["PATH"] = os.environ["PATH"].replace(os.pathsep + gdal_path, "", 1)
 
     # Taudem path 받아 오기
     def GetTaudemPath(self):
