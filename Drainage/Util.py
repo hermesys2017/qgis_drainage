@@ -460,18 +460,18 @@ class util(Singleton):
 
     # 콤보박스 리스트 셋팅 type은( tif, shp , "" 일땐 모두다)
     def SetCommbox(
-        self, layers: list[QgsMapLayer], commbox: QComboBox, type: str
+        self, layers: list[QgsMapLayer], commbox: QComboBox, ext: str
     ) -> None:
         layer_list = []
 
         if layers is None:
             pass
-        elif type.upper() == "TIF":
+        elif ext.upper() == "TIF":
             for layer in layers:
                 layertype = layer.type()
                 if layertype == layer.RasterLayer:
                     layer_list.append(layer.name())
-        elif type.upper() == "SHP":
+        elif ext.upper() == "SHP":
             for layer in layers:
                 layertype = layer.type()
                 if layertype == layer.VectorLayer:
