@@ -40,6 +40,7 @@ class util(Singleton):
         self.tauDEMCommand = self.enum(
             "SK", "FLAT", "FD", "FA", "SG", "ST", "STV", "CAT"
         )
+        self.__logger = get_logger()
 
     def error_decorator(self, title: str):
         def inner_error_process(func: callable):
@@ -47,7 +48,7 @@ class util(Singleton):
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    get_logger().error(e)
+                    self.__logger.error(e)
                     self.MessageboxShowError(title, str(e))
 
             return wrapper
@@ -92,9 +93,9 @@ class util(Singleton):
             stderr=subprocess.PIPE,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
-        get_logger().info(f"Execute: {arg}")
+        self.__logger.info(f"Execute: {arg}")
         if value.returncode != 0:
-            get_logger().error(
+            self.__logger.error(
                 f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}"
             )
             raise Exception(f"Process run error: {arg}")
@@ -518,9 +519,8 @@ class util(Singleton):
 
     # 폴더및 파일 명칭에 한글 포함하고 있는지 체크
     def CheckKorea(self, string):
-        #         sys.setdefaultencoding('utf-8')
         strs = re.sub("[^가-힣]", "", string)
-        if len(strs) > 0:
+        if strs:
             return True
         else:
             return False
@@ -530,19 +530,6 @@ class util(Singleton):
         s = os.path.splitext(filename)
         s = os.path.split(s[0])
         return s[1]
-
-    # def Convert_TIFF_To_ASCii(self,inputfile):
-    #     # nodata 설정옵션이 Gdal 에서 안먹음
-    #     Extension=""
-    #     Extension=os.path.splitext(inputfile)[1]
-    #     Output = inputfile.replace(Extension,".asc")
-    #     gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
-    #     # arg = '"{0}" -of AAIGrid -ot Float64 -a_nodata -9999 --config GDAL_FILENAME_IS_UTF8 NO "{1}" "{2}"'.format(gdal_translate,inputfile,Output)
-    #     arg = '"{0}" -of AAIGrid "{1}" "{2}"'.format(gdal_translate, inputfile, Output)
-    #     result=self.Execute(arg)
-    #     if result == 0 :
-    #         # self.ASC_Header_replace(Output)
-    #         self.Addlayer_OutputFile(Output)
 
     def Convert_TIFF_To_ASCii(self, inputfile):
         # nodata 설정옵션이 Gdal 에서 안먹음
@@ -562,7 +549,6 @@ class util(Singleton):
         gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
         arg = '"{0}" -of GTiff  "{1}" "{2}"'.format(gdal_translate, inputfile, OutFile)
         self.Execute(arg)
-        # self.Addlayer_OutputFile(Output)
 
     def Convert_TIFF_To_ASCii_retpaht(self, inputfile):
         Extension = ""
@@ -571,7 +557,7 @@ class util(Singleton):
         gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
         # arg = '"{0}" -of AAIGrid -ot Float64 -a_nodata -9999 --config GDAL_FILENAME_IS_UTF8 NO "{1}" "{2}"'.format(gdal_translate,inputfile,Output)
         arg = '"{0}" -of AAIGrid "{1}" "{2}"'.format(gdal_translate, inputfile, Output)
-        result = self.Execute(arg)
+        self.Execute(arg)
         return Output
 
     # 레스터 레이어 목록 Qgis에 올리기
@@ -582,8 +568,6 @@ class util(Singleton):
             baseName = fileInfo.baseName()
             layer = QgsRasterLayer(fileName, baseName, "gdal")
             QgsProject.instance().addMapLayer(layer)
-
-    #             QgsProject.instance().addRasterLayer(fileName, baseName)
 
     def VectorLayer_AddLayer(self, outputpath):
         fileName = outputpath
