@@ -86,7 +86,7 @@ class DrainageDockWidget(QtWidgets.QDockWidget, Ui_DrainageDockWidgetBase):
     def onDoubleClick(self, item: QtWidgets.QTreeWidgetItem):
         SelectItme = item.text(0)
         if SelectItme == "Batch Processor":
-            results_dialog = BatchProcessor(iface=self.iface)
+            results_dialog = BatchProcessor(iface=self.iface, parent=self)
             results_dialog.exec_()
         elif SelectItme == "Create OutletPoint Layer and Draw OutletPoint":
             _util.MessageboxShowInfo(
