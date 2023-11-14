@@ -103,7 +103,12 @@ class util(Singleton):
 
     # 각각의 기능별로 arg를 생성하고 반환 하는 기능
     def GetTaudemArg(
-        self, inputfile: str, ouputfile: str, taudemcommand, facoption, optionvalue
+        self,
+        inputfile: str,
+        ouputfile: str,
+        taudemcommand: str,
+        facoption: bool,
+        optionvalue: str,
     ):
         option = optionvalue
         tauPath = self.GetTaudemPath()
@@ -148,7 +153,7 @@ class util(Singleton):
             )
         elif taudemcommand == self.tauDEMCommand.FA:
             tauPath = tauPath + "AreaD8.exe"
-            if str(facoption) == "True":
+            if facoption:
                 arg = (
                     '"'
                     + tauPath
@@ -531,7 +536,7 @@ class util(Singleton):
         s = os.path.split(s[0])
         return s[1]
 
-    def Convert_TIFF_To_ASCii(self, inputfile):
+    def Convert_TIFF_To_ASCii(self, inputfile: str):
         # nodata 설정옵션이 Gdal 에서 안먹음
         Extension = os.path.splitext(inputfile)[1]
         Output = inputfile.replace(Extension, ".asc")
