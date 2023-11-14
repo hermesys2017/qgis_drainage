@@ -6,9 +6,17 @@ import subprocess
 import tempfile
 
 import win32api
-from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.core import (
+    QgsApplication,
+    QgsMapLayer,
+    QgsProject,
+    QgsRasterLayer,
+    QgsVectorLayer,
+)
 from qgis.PyQt.QtCore import QFileInfo
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QComboBox, QMessageBox
+
+from drainage.logger import get_logger
 
 
 class Singleton(object):
@@ -32,6 +40,19 @@ class util(Singleton):
         self.tauDEMCommand = self.enum(
             "SK", "FLAT", "FD", "FA", "SG", "ST", "STV", "CAT"
         )
+
+    def error_decorator(self, title: str):
+        def inner_error_process(func: callable):
+            def wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    get_logger().error(e)
+                    self.MessageboxShowError(title, str(e))
+
+            return wrapper
+
+        return inner_error_process
 
     def enum(*sequential, **named):
         enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -64,11 +85,25 @@ class util(Singleton):
         return gdal_path
 
     def Execute(self, arg):
-        value = subprocess.run(arg, creationflags=subprocess.CREATE_NO_WINDOW)
+        value = subprocess.run(
+            arg,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        get_logger().info(f"Execute: {arg}")
+        if value.returncode != 0:
+            get_logger().error(
+                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}"
+            )
+            raise Exception(f"Process run error: {arg}")
         return value.returncode
 
     # 각각의 기능별로 arg를 생성하고 반환 하는 기능
-    def GetTaudemArg(self, inputfile, ouputfile, taudemcommand, facoption, optionvalue):
+    def GetTaudemArg(
+        self, inputfile: str, ouputfile: str, taudemcommand, facoption, optionvalue
+    ):
         option = optionvalue
         tauPath = self.GetTaudemPath()
         input = inputfile.replace("\\", "\\\\")
@@ -418,10 +453,12 @@ class util(Singleton):
         return output_temp
 
     # 콤보박스 리스트 셋팅 type은( tif, shp , "" 일땐 모두다)
-    def SetCommbox(self, layers, commbox, type):
+    def SetCommbox(
+        self, layers: list[QgsMapLayer], commbox: QComboBox, type: str
+    ) -> None:
         layer_list = []
 
-        if layers == None:
+        if layers is None:
             pass
         elif type.upper() == "TIF":
             for layer in layers:
@@ -433,11 +470,6 @@ class util(Singleton):
                 layertype = layer.type()
                 if layertype == layer.VectorLayer:
                     layer_list.append(layer.name())
-        elif type.upper() == "POINT":
-            for layer in layers:
-                if layer.type() == 0:
-                    if layer.geometryType() == 0:
-                        layer_list.append(layer.name())
         else:
             for layer in layers:
                 layer_list.append(layer.name())

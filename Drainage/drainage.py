@@ -33,6 +33,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
 from drainage.Drainage_dockwidget import DrainageDockWidget
+from drainage.logger import init_logger
 
 # Initialize Qt resources from file resources.py
 from drainage.resources import *
@@ -55,24 +56,17 @@ class Drainage:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
 
+        # start logger
+        init_logger()
+
         # check required program
         _util = util()
         if not _util.is_installed_taudem():
-            self.iface.messageBar().pushMessage(
-                "Error",
-                "TauDEM is not installed. Please install TauDEM.",
-                level=Qgis.Critical,
-                duration=10,
-            )
-            return
+            raise EnvironmentError("TauDEM is not installed. Please install TauDEM.")
         elif not _util.is_installed_gdal_for_taudem():
-            self.iface.messageBar().pushMessage(
-                "Error",
-                "GDAL is not installed. Please install GDAL.",
-                level=Qgis.Critical,
-                duration=10,
+            raise EnvironmentError(
+                "GDAL is not installed. Please install GDAL with TauDEM."
             )
-            return
 
         # add gdal path in environment variable
         _util.add_gdal_path()
@@ -108,6 +102,11 @@ class Drainage:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        # Add toolbar button and menu item
+        self.dlg = DrainageDockWidget(iface=self.iface)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
+        self.dlg.hide()  # 숨긴상태로 실행
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -218,26 +217,18 @@ class Drainage:
             self.iface.removeToolBarIcon(action)
 
         util().remove_gdal_path()
+        self.iface.removeDockWidget(self.dlg)
+        del self.dlg
 
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = DrainageDockWidget(iface=self.iface)
-
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
 
         # show the dialog
-        self.dlg.show()
+        if self.dlg.isVisible():
+            self.dlg.hide()
+        else:
+            self.dlg.show()
         # Run the dialog event loop
-
-
-#         result = self.dlg.exec_()
-# See if OK was pressed
-#         if result:
-#             # Do something useful here - delete the line containing pass and
-#             # substitute with your code.
-#             pass
