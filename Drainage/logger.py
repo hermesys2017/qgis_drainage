@@ -2,8 +2,6 @@ import logging
 import os
 from datetime import datetime
 
-import yaml
-
 
 def init_logger() -> None:
     logger = logging.getLogger("drainage")
@@ -27,6 +25,17 @@ def init_logger() -> None:
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
+    error_file_handler = logging.FileHandler(
+        os.path.join(
+            path,
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S_error')}.log",
+        ),
+        mode="a",
+    )
+    error_file_handler.setLevel(logging.ERROR)
+    error_file_handler.setFormatter(formatter)
+    logger.addHandler(error_file_handler)
 
 
 def get_logger() -> logging.Logger:
