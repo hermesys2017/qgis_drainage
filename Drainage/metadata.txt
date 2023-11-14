@@ -12,7 +12,7 @@ qgisMinimumVersion=3.10
 qgisMaximumVersion=3.99
 description=Create drainage network
 about=Create drainage network
-version=0.1.5
+version=0.1.6
 author=KICT, Hermesys
 email=info@hermesys.co.kr
 
@@ -23,6 +23,9 @@ email=info@hermesys.co.kr
 
 # Uncomment the following line and add your changelog:
 changelog=
+      0.1.6
+        - Fix bug
+          - Cannot create FD files
       0.1.5
         - Add Logger for debugging
         - Refactoring code
