@@ -212,14 +212,14 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
     # 파일 경로 변수에 셋팅
     def __setting_value(self):
         self_values = [
-            self.Fill,
-            self.FD,
-            self.FAC,
-            self.Slope,
-            self.Stream,
-            self.Catchment,
-            self.StreamVector,
-            self.CellValue,
+            "Fill",
+            "FD",
+            "FAC",
+            "Slope",
+            "Stream",
+            "Catchment",
+            "StreamVector",
+            "CellValue",
         ]
         textboxs = [
             self.txtFill,
@@ -233,8 +233,10 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         ]
 
         for i in range(0, len(self_values)):
-            self_values[i] = (
-                os.path.dirname(self.LayerPath) + "\\" + textboxs[i].text() + ".tif"
+            setattr(
+                self,
+                self_values[i],
+                os.path.dirname(self.LayerPath) + "\\" + textboxs[i].text() + ".tif",
             )
 
     def __create_stream_vector(self):
