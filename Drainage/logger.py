@@ -40,3 +40,11 @@ def init_logger() -> None:
 
 def get_logger() -> logging.Logger:
     return logging.getLogger("drainage")
+
+
+def unload_logger() -> None:
+    logger = logging.getLogger("drainage")
+    handlers = logger.handlers[:]
+    for handler in handlers:
+        handler.close()
+        logger.removeHandler(handler)

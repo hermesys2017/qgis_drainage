@@ -33,7 +33,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
 from drainage.Drainage_dockwidget import DrainageDockWidget
-from drainage.logger import init_logger
+from drainage.logger import init_logger, unload_logger
 
 # Initialize Qt resources from file resources.py
 from drainage.resources import *
@@ -219,6 +219,7 @@ class Drainage:
         util().remove_gdal_path()
         self.iface.removeDockWidget(self.dlg)
         del self.dlg
+        unload_logger()
 
     def run(self):
         """Run method that performs all the real work"""
