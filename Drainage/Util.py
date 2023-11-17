@@ -459,9 +459,7 @@ class util(Singleton):
         return output_temp
 
     # 콤보박스 리스트 셋팅 type은( tif, shp , "" 일땐 모두다)
-    def SetCommbox(
-        self, layers: list[QgsMapLayer], commbox: QComboBox, ext: str
-    ) -> None:
+    def SetCommbox(self, layers, commbox: QComboBox, ext: str) -> None:
         layer_list = []
 
         if layers is None:
