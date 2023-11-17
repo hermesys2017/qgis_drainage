@@ -21,8 +21,11 @@
  *                                                                         *
  ***************************************************************************/
 """
+import logging
 import os.path
+from datetime import datetime
 
+from qgis.core import Qgis
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
@@ -30,9 +33,11 @@ from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
 from drainage.Drainage_dockwidget import DrainageDockWidget
+from drainage.logger import init_logger, unload_logger
 
 # Initialize Qt resources from file resources.py
 from drainage.resources import *
+from drainage.Util import util
 
 
 class Drainage:
@@ -50,6 +55,33 @@ class Drainage:
         self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+
+        # start logger
+        init_logger()
+
+        # check required program
+        _util = util()
+        if not _util.is_installed_taudem():
+            raise EnvironmentError("TauDEM is not installed. Please install TauDEM.")
+        elif not _util.is_installed_gdal_for_taudem():
+            raise EnvironmentError(
+                "GDAL is not installed. Please install GDAL with TauDEM."
+            )
+
+        # add gdal path in environment variable
+        _util.add_gdal_path()
+
+        # initialize log
+        path = os.path.join(self.plugin_dir, "log")
+        os.makedirs(path, exist_ok=True)
+        logging.basicConfig(
+            filename=os.path.join(
+                path,
+                f"{datetime.now().strftime('%Y%m%d_%H%M%S_start')}.log",
+            ),
+            level=logging.DEBUG,
+        )
+
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
@@ -70,6 +102,11 @@ class Drainage:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        # Add toolbar button and menu item
+        self.dlg = DrainageDockWidget(iface=self.iface)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
+        self.dlg.hide()  # 숨긴상태로 실행
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -179,25 +216,20 @@ class Drainage:
             self.iface.removePluginMenu(self.tr("&Drainage"), action)
             self.iface.removeToolBarIcon(action)
 
+        util().remove_gdal_path()
+        self.iface.removeDockWidget(self.dlg)
+        del self.dlg
+        unload_logger()
+
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = DrainageDockWidget(iface=self.iface)
-
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
 
         # show the dialog
-        self.dlg.show()
+        if self.dlg.isVisible():
+            self.dlg.hide()
+        else:
+            self.dlg.show()
         # Run the dialog event loop
-
-
-#         result = self.dlg.exec_()
-# See if OK was pressed
-#         if result:
-#             # Do something useful here - delete the line containing pass and
-#             # substitute with your code.
-#             pass

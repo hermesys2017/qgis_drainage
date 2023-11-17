@@ -1,0 +1,23 @@
+version: 1
+handlers:
+  stream_handler:
+    class: logging.StreamHandler
+    level: DEBUG
+    stream: ext://sys.stdout
+  file_handler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: default_formatter
+    filename: ./drainage.log
+    mode: a
+formatters:
+  default_formatter:
+    format: '{"logger": "%(name)s", "level": "%(levelname)s", "message": "%(message)s", "asctime": "%(asctime)s"}'
+    datefmt: ''
+loggers:
+  drainage:
+    level: INFO
+    handlers:
+      - stream_handler
+      - file_handler
+    propagate: false

@@ -46,7 +46,7 @@ class DrainageDockWidget(QtWidgets.QDockWidget, Ui_DrainageDockWidgetBase):
 
     def __init__(self, iface: QgisInterface, parent: QtWidgets.QWidget = None) -> None:
         """Constructor."""
-        super(DrainageDockWidget, self).__init__(parent)
+        super().__init__()
         self.iface = iface
         self.setupUi(self)
         # 트리 위젯에 메뉴 항목을 넣는 부분임
@@ -63,9 +63,6 @@ class DrainageDockWidget(QtWidgets.QDockWidget, Ui_DrainageDockWidgetBase):
 
         # Qtree 박스에 헤더 부분 제거
         self.treeWidget.setHeaderHidden(True)
-        result = _util.CheckTaudem()
-        if result == False:
-            _util.MessageboxShowError("Drainage", "Taudem is not installed.")
         item10 = QtWidgets.QTreeWidgetItem(self.treeWidget, ["Drainage"])
 
         item16 = QtWidgets.QTreeWidgetItem(item10, ["Batch Processor"])
@@ -86,10 +83,10 @@ class DrainageDockWidget(QtWidgets.QDockWidget, Ui_DrainageDockWidgetBase):
         # 더블 클릭 했을대 메뉴 명칭 확인
         self.treeWidget.itemDoubleClicked.connect(self.onDoubleClick)
 
-    def onDoubleClick(self, item):
+    def onDoubleClick(self, item: QtWidgets.QTreeWidgetItem):
         SelectItme = item.text(0)
         if SelectItme == "Batch Processor":
-            results_dialog = BatchProcessor(iface=self.iface)
+            results_dialog = BatchProcessor(iface=self.iface, parent=self)
             results_dialog.exec_()
         elif SelectItme == "Create OutletPoint Layer and Draw OutletPoint":
             _util.MessageboxShowInfo(

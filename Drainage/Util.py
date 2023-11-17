@@ -2,16 +2,33 @@
 import os
 import os.path
 import re
+import subprocess
 import tempfile
-from subprocess import call
 
 import win32api
-from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.core import (
+    QgsApplication,
+    QgsMapLayer,
+    QgsProject,
+    QgsRasterLayer,
+    QgsVectorLayer,
+)
 from qgis.PyQt.QtCore import QFileInfo
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QComboBox, QMessageBox
+
+from drainage.logger import get_logger
 
 
-class util:
+class Singleton(object):
+    _instance = None
+
+    def __new__(class_, *args, **kwargs):
+        if not isinstance(class_._instance, class_):
+            class_._instance = object.__new__(class_, *args, **kwargs)
+        return class_._instance
+
+
+class util(Singleton):
     def __init__(self):
         self.Input_Layer_Path = ""
         self.FillSink_Layer_Path = ""
@@ -23,6 +40,20 @@ class util:
         self.tauDEMCommand = self.enum(
             "SK", "FLAT", "FD", "FA", "SG", "ST", "STV", "CAT"
         )
+        self.__logger = get_logger()
+
+    def error_decorator(self, title: str):
+        def inner_error_process(func: callable):
+            def wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    self.__logger.error(e)
+                    self.MessageboxShowError(title, str(e))
+
+            return wrapper
+
+        return inner_error_process
 
     def enum(*sequential, **named):
         enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -30,18 +61,55 @@ class util:
         enums["reverse_mapping"] = reverse
         return type("Enum", (), enums)
 
+    def is_installed_taudem(self) -> bool:
+        return os.path.isdir(self.GetTaudemPath())
+
+    def is_installed_gdal_for_taudem(self) -> bool:
+        return os.path.isdir(self.get_gdal_path())
+
+    def add_gdal_path(self):
+        gdal_path = self.get_gdal_path()
+        os.environ["PATH"] += os.pathsep + gdal_path
+
+    def remove_gdal_path(self):
+        gdal_path = self.get_gdal_path()
+        os.environ["PATH"] = os.environ["PATH"].replace(os.pathsep + gdal_path, "", 1)
+
     # Taudem path 받아 오기
     def GetTaudemPath(self):
         tauPath = "C:\\Program Files\\TauDEM\\TauDEM5Exe\\"
         return tauPath
 
+    # @property
+    def get_gdal_path(self):
+        gdal_path = "C:\\Program Files\\GDAL"
+        return gdal_path
+
     def Execute(self, arg):
-        CREATE_NO_WINDOW = 0x08000000
-        value = call(arg, creationflags=CREATE_NO_WINDOW)
-        return value
+        value = subprocess.run(
+            arg,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        self.__logger.info(f"Execute: {arg}")
+        if value.returncode != 0:
+            self.__logger.error(
+                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}"
+            )
+            raise Exception(f"Process run error: {arg}")
+        return value.returncode
 
     # 각각의 기능별로 arg를 생성하고 반환 하는 기능
-    def GetTaudemArg(self, inputfile, ouputfile, taudemcommand, facoption, optionvalue):
+    def GetTaudemArg(
+        self,
+        inputfile: str,
+        ouputfile: str,
+        taudemcommand: str,
+        facoption: bool,
+        optionvalue: str,
+    ):
         option = optionvalue
         tauPath = self.GetTaudemPath()
         input = inputfile.replace("\\", "\\\\")
@@ -85,7 +153,7 @@ class util:
             )
         elif taudemcommand == self.tauDEMCommand.FA:
             tauPath = tauPath + "AreaD8.exe"
-            if str(facoption) == "True":
+            if facoption:
                 arg = (
                     '"'
                     + tauPath
@@ -391,26 +459,21 @@ class util:
         return output_temp
 
     # 콤보박스 리스트 셋팅 type은( tif, shp , "" 일땐 모두다)
-    def SetCommbox(self, layers, commbox, type):
+    def SetCommbox(self, layers, commbox: QComboBox, ext: str) -> None:
         layer_list = []
 
-        if layers == None:
+        if layers is None:
             pass
-        elif type.upper() == "TIF":
+        elif ext.upper() == "TIF":
             for layer in layers:
                 layertype = layer.type()
                 if layertype == layer.RasterLayer:
                     layer_list.append(layer.name())
-        elif type.upper() == "SHP":
+        elif ext.upper() == "SHP":
             for layer in layers:
                 layertype = layer.type()
                 if layertype == layer.VectorLayer:
                     layer_list.append(layer.name())
-        elif type.upper() == "POINT":
-            for layer in layers:
-                if layer.type() == 0:
-                    if layer.geometryType() == 0:
-                        layer_list.append(layer.name())
         else:
             for layer in layers:
                 layer_list.append(layer.name())
@@ -459,9 +522,8 @@ class util:
 
     # 폴더및 파일 명칭에 한글 포함하고 있는지 체크
     def CheckKorea(self, string):
-        #         sys.setdefaultencoding('utf-8')
         strs = re.sub("[^가-힣]", "", string)
-        if len(strs) > 0:
+        if strs:
             return True
         else:
             return False
@@ -472,20 +534,7 @@ class util:
         s = os.path.split(s[0])
         return s[1]
 
-    # def Convert_TIFF_To_ASCii(self,inputfile):
-    #     # nodata 설정옵션이 Gdal 에서 안먹음
-    #     Extension=""
-    #     Extension=os.path.splitext(inputfile)[1]
-    #     Output = inputfile.replace(Extension,".asc")
-    #     gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
-    #     # arg = '"{0}" -of AAIGrid -ot Float64 -a_nodata -9999 --config GDAL_FILENAME_IS_UTF8 NO "{1}" "{2}"'.format(gdal_translate,inputfile,Output)
-    #     arg = '"{0}" -of AAIGrid "{1}" "{2}"'.format(gdal_translate, inputfile, Output)
-    #     result=self.Execute(arg)
-    #     if result == 0 :
-    #         # self.ASC_Header_replace(Output)
-    #         self.Addlayer_OutputFile(Output)
-
-    def Convert_TIFF_To_ASCii(self, inputfile):
+    def Convert_TIFF_To_ASCii(self, inputfile: str):
         # nodata 설정옵션이 Gdal 에서 안먹음
         Extension = os.path.splitext(inputfile)[1]
         Output = inputfile.replace(Extension, ".asc")
@@ -503,7 +552,6 @@ class util:
         gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
         arg = '"{0}" -of GTiff  "{1}" "{2}"'.format(gdal_translate, inputfile, OutFile)
         self.Execute(arg)
-        # self.Addlayer_OutputFile(Output)
 
     def Convert_TIFF_To_ASCii_retpaht(self, inputfile):
         Extension = ""
@@ -512,7 +560,7 @@ class util:
         gdal_translate = "C:\Program Files\GDAL\gdal_translate.exe"
         # arg = '"{0}" -of AAIGrid -ot Float64 -a_nodata -9999 --config GDAL_FILENAME_IS_UTF8 NO "{1}" "{2}"'.format(gdal_translate,inputfile,Output)
         arg = '"{0}" -of AAIGrid "{1}" "{2}"'.format(gdal_translate, inputfile, Output)
-        result = self.Execute(arg)
+        self.Execute(arg)
         return Output
 
     # 레스터 레이어 목록 Qgis에 올리기
@@ -523,8 +571,6 @@ class util:
             baseName = fileInfo.baseName()
             layer = QgsRasterLayer(fileName, baseName, "gdal")
             QgsProject.instance().addMapLayer(layer)
-
-    #             QgsProject.instance().addRasterLayer(fileName, baseName)
 
     def VectorLayer_AddLayer(self, outputpath):
         fileName = outputpath

@@ -22,9 +22,9 @@
 """
 import os
 
-from qgis.core import QgsProject, QgsRasterLayer
-from qgis.PyQt.QtCore import QFileInfo
-from qgis.PyQt.QtWidgets import QDialog
+from qgis.core import QgsMapLayer, QgsProject
+from qgis.PyQt.QtGui import QIntValidator
+from qgis.PyQt.QtWidgets import QDialog, QLineEdit
 
 from drainage.ui.Batch_Processor_dialog_base import Ui_WatershedDialogBase
 from drainage.Util import util
@@ -33,19 +33,81 @@ _util = util()
 
 
 class BatchProcessor(QDialog, Ui_WatershedDialogBase):
-    # 레이어 목록 콤보 박스 셋팅
-    def SetCombobox(self):
-        layers = QgsProject.instance().mapLayers().values()
+    def __init__(self, iface=None, parent=None):
+        """Constructor."""
+        super().__init__(parent=parent)
+        self.setupUi(self)
+        self.iface = iface
+
+        self.__init_var_setting()
+        self.__init_event_setting()
+        self.__init_validator_setting()
+
+    def __init_var_setting(self):
+        """
+        초기 세팅 구성
+        """
+        self.__setting_file()
+        self.__set_combobox()
+
+    def __init_event_setting(self):
+        """
+        이벤트 세팅 구성
+        """
+        # 콤보 박스 선택 시 텍스트 창에 기본 파일 이름 적용
+        self.cmbLayer.currentIndexChanged.connect(self.__select_combobox_event)
+
+        # OK버튼 눌렀을때 처리 부분
+        self.btnOK.clicked.connect(self.__click_ok_button)
+
+        # Cancle버튼 클릭 이벤트
+        self.btnCancel.clicked.connect(self.close)
+
+        # # 라디오 버튼 기본 설정
+        self.chkStream.stateChanged.connect(self.checkbox_Stream)
+        self.chkStream.setChecked(True)
+        self.checkbox_Stream()
+
+        # Stream chk와 label 연동
+        self.lblStream.mouseReleaseEvent = self.setStreamChecked
+
+    def __init_validator_setting(self):
+        """
+        유효성 검사 세팅 구성
+        """
+        only_int = QIntValidator()
+        self.txtCellValue.setValidator(only_int)
+
+    def __setting_file(self):
+        """
+        파일 경로 변수 선언
+        """
+        self.LayerPath = ""
+        self.Layername = ""
+        self.Fill = ""
+        self.Flat = ""
+        self.FD = ""
+        self.FAC = ""
+        self.Slope = ""
+        self.Stream = ""
+        self.CellValue = 0
+        self.Catchment = ""
+        self.StreamVector = ""
+
+    def __set_combobox(self):
+        """
+        콤보 박스 레이어 셋팅
+        """
+        layers: list[QgsMapLayer] = QgsProject.instance().mapLayers().values()
         _util.SetCommbox(layers, self.cmbLayer, "tif")
 
     # 콤보 박스 선택시 이벤트 처리
-    def SelectCombobox_event(self):
+    def __select_combobox_event(self):
         index = self.cmbLayer.currentIndex()
-        if index > 0:
+        if index != 0:
             self.LayerPath = _util.GetcomboSelectedLayerPath(self.cmbLayer)
             self.Layername = _util.GetFilename(self.LayerPath)
             self.txtFill.setText(self.Layername + "_Hydro")
-            # self.txtFlat.setText(self.Layername + "_Flat")
             self.txtFD.setText(self.Layername + "_Fdr")
             self.txtFAC.setText(self.Layername + "_Fac")
             self.txtSlope.setText(self.Layername + "_Slope")
@@ -53,169 +115,93 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
             self.txtStreamVector.setText(self.Layername + "_Stream_polyline")
             self.txtCatchment.setText(self.Layername + "_Catchment")
 
-    def isInt(self, anyNumberOrString):
-        try:
-            int(
-                anyNumberOrString
-            )  # to check float and int use "float(anyNumberOrString)"
-            return True
-        except ValueError:
-            return False
+    def __asc_to_tiff(self, asc_path: str) -> str:
+        """
+        asc 파일을 tiff 파일로 변환
+        """
+        tiff_path = asc_path.replace(".asc", ".tif")
+        _util.Convert_ASCii_To_TIFF(asc_path, tiff_path)
+        return tiff_path
 
-    def Click_Okbutton(self):
+    def __get_extension(self, path: str) -> str:
+        """
+        파일 확장자 가져오기
+        """
+        return os.path.splitext(path)[1]
+
+    @_util.error_decorator("Batch Processor")
+    def __click_ok_button(self, event):
         # 레이어 경로에 한글이 있으면 오류로 처리
         if _util.CheckKorea(self.LayerPath):
-            _util.MessageboxShowInfo(
-                "Batch Processor", "\n The file path contains Korean. \n"
-            )
-            return
+            raise Exception("The file path contains Korean.")
 
-        fname, ext = os.path.splitext(self.LayerPath)
-        if ext.upper() in ".ASC":
-            # _util.MessageboxShowInfo("1","asc")
-            inputfile = self.LayerPath
-            self.LayerPath = self.LayerPath.replace(ext, ".TIF")
-            _util.Convert_ASCii_To_TIFF(inputfile, self.LayerPath)
-            # _util.MessageboxShowInfo("Layerpath",self.LayerPath)
-
-            # return
-        elif ext.upper() in ".TIF":
-            # _util.MessageboxShowInfo("1", "tif")
+        # only ASCII files and TIF file formats are supported.
+        ext = self.__get_extension(self.LayerPath)
+        if ext.lower() == ".asc":
+            self.LayerPath = self.__asc_to_tiff(self.LayerPath)
+        elif ext.lower() == ".tif":
             pass
         else:
-            _util.MessageboxShowInfo(
-                "Batch Processor",
-                "Only ASCII files and TIF file formats are supported.",
-            )
-            return
+            raise Exception("Only ASCII files and TIF file formats are supported.")
 
-        # 파일 이름이 없는 텍스트 박스 확인
-        if self.checkTextbox(self.txtFill):
-            pass
-        else:
-            return
-
-        # self.checkTextbox(self.txtFlat)
-
-        if self.checkTextbox(self.txtFD):
-            pass
-        else:
-            return
-
-        if self.checkTextbox(self.txtFAC):
-            pass
-        else:
-            return
-
-        if self.checkTextbox(self.txtSlope):
-            pass
-        else:
-            return
-
-        if self.checkTextbox(self.txtStream):
-            pass
-        else:
-            return
-
-        if self.txtCellValue.text() == "":
-            _util.MessageboxShowError("Batch Processor", " CellValue is required. ")
-            self.txtCellValue.setFocus()
-            return False
-
-        vlaue = self.txtCellValue.text()
-        if not self.isInt(vlaue):
-            _util.MessageboxShowError(
-                "Batch Processor", " Please enter only integers. "
-            )
-            return
-
+        # 비어있는 텍스트 박스 체크
+        self.__error_empty_textbox(self.txtFill, "Fill Sink is required.")
+        self.__error_empty_textbox(self.txtFD, "Flow Direction is required.")
+        self.__error_empty_textbox(self.txtFAC, "Flow Accumulation is required.")
+        self.__error_empty_textbox(self.txtSlope, "Slope is required.")
+        self.__error_empty_textbox(self.txtStream, "Stream Raster file is required.")
+        self.__error_empty_textbox(self.txtCellValue, "Threshold Value is required.")
+        self.__error_empty_textbox(self.txtCatchment, "Catchment is required.")
         if self.chkStream.isChecked():
-            self.checkTextbox(self.txtStreamVector)
-
-        self.checkTextbox(self.txtCatchment)
+            self.__error_empty_textbox(
+                self.txtStreamVector, "Make polyline is required."
+            )
 
         # 파일 경로 변수에 셋팅
-        self.SettingValue()
+        self.__setting_value()
 
         # Fill sink 시작
         arg = _util.GetTaudemArg(
             self.LayerPath, self.Fill, _util.tauDEMCommand.SK, False, 0
         )
-        ReultFill = self.ExecuteArg(arg, self.Fill)
+        _util.Execute(arg)
 
-        # Fill sink 후에 Flat 처리를 하면 실행이 안되는거 같음 확인 해야 할 문제
+        # FD 시작
+        arg = _util.GetTaudemArg(self.Fill, self.FD, _util.tauDEMCommand.FD, False, 0)
+        _util.Execute(arg)
+        # FA 시작
+        arg = _util.GetTaudemArg(self.FD, self.FAC, _util.tauDEMCommand.FA, False, 0)
+        _util.Execute(arg)
+        # Slope 시작
+        arg = _util.GetTaudemArg(
+            self.Fill, self.Slope, _util.tauDEMCommand.SG, False, 0
+        )
+        _util.Execute(arg)
+        # Stream 시작
+        cell_value = self.txtCellValue.text()
+        arg = _util.GetTaudemArg(
+            self.FAC,
+            self.Stream,
+            _util.tauDEMCommand.ST,
+            False,
+            cell_value,
+        )
+        _util.Execute(arg)
+        arg = self.__create_stream_vector()
 
-        # # Fill sink 가 성공적으로 처리가 되었을때 다음 루틴 처리 진행
-        # if (ReultFill):
-        #     # Flat 처리 부분
-        #     # 1. fill sink tif 파일을 asc 로 변환
-        #     RetConvert_Fill=_util.Convert_TIFF_To_ASCii_retpaht(self.Fill)
-        #     # Flat 결과 파일
-        #     AscFlat = self.Flat.replace(".tif",".asc")
-        #
-        #     # 2. Fill sink Flat 실행
-        #     Flat_exe_Path = os.path.dirname(os.path.abspath(__file__)) + '\Flat\Flat.exe'
-        #     arg ='"' + Flat_exe_Path + '"' +' '+  RetConvert_Fill +' '+ AscFlat
-        #     # self.ExecuteArg(arg,RetConvert_Fill)
-        #     _util.MessageboxShowError("arg",arg)
-        #     # 3. Flat 결과를 Tiff 로 변환 처리
-        #     # _util.Convert_ASCii_To_TIFF(AscFlat,self.Flat)
+        _util.Execute(arg)
 
-        if ReultFill:
-            # FD 시작
-            arg = _util.GetTaudemArg(
-                self.Fill, self.FD, _util.tauDEMCommand.FD, False, 0
-            )
-            FillResult = self.ExecuteArg(arg, self.FD)
-            if FillResult:
-                # FA 시작
-                arg = _util.GetTaudemArg(
-                    self.FD, self.FAC, _util.tauDEMCommand.FA, False, 0
-                )
-                FacResult = self.ExecuteArg(arg, self.FAC)
-                if FacResult:
-                    # Slope 시작
-                    arg = _util.GetTaudemArg(
-                        self.Fill, self.Slope, _util.tauDEMCommand.SG, False, 0
-                    )
-                    SlopResult = self.ExecuteArg(arg, self.Slope)
-                    if SlopResult:
-                        # Stream 시작
-                        cellValue = self.txtCellValue.text()
-                        arg = _util.GetTaudemArg(
-                            self.FAC,
-                            self.Stream,
-                            _util.tauDEMCommand.ST,
-                            False,
-                            cellValue,
-                        )
-                        StreamResult = self.ExecuteArg(arg, self.Stream)
-                        if StreamResult:
-                            arg = self.CreateStreamVector()
+        # tif 파일 asc 파일로 변환
+        self.__convert_tiff_to_asc()
 
-                            StreamVectorResult = self.ExecuteArg(arg, self.StreamVector)
-                            if StreamVectorResult:
-                                # tif 파일 asc 파일로 변환
-                                self.ConvertTiff_To_Asc()
-                                self.Delete_tempfile()
-                                _util.MessageboxShowInfo(
-                                    "Batch processor", "The process is complete."
-                                )
-                                self.close()
+        # 임시 파일 삭제
+        self.__delete_tempfile()
 
-    # arg 받아서 처리 완료 되면 레이어  Qgis 에서 올림
-    def ExecuteArg(self, arg, outpath):
-        returnValue = _util.Execute(arg)
-        if returnValue == 0:
-            # self.Addlayer_OutputFile(outpath)
-            return True
-        else:
-            _util.MessageboxShowError(
-                "Batch Processor", " There was an error creating the file. "
-            )
-            return False
+        # 메시지 박스 출력
+        _util.MessageboxShowInfo("Batch processor", "The process is complete.")
+        self.close()
 
-    def Delete_tempfile(self):
+    def __delete_tempfile(self):
         for i in range(0, 3):
             os.remove(self.outFiles[i])
         if self.chkStream.isChecked():
@@ -223,41 +209,37 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         else:
             os.remove(self.outFiles[3])
 
-    # 레이어 목록 Qgis에 올리기
-    def Addlayer_OutputFile(self, outputpath):
-        if os.path.isfile(outputpath):
-            fileName = outputpath
-            fileInfo = QFileInfo(fileName)
-            baseName = fileInfo.baseName()
-            layer = QgsRasterLayer(fileName, baseName, "gdal")
-            QgsProject.instance().addMapLayer(layer)
-
     # 파일 경로 변수에 셋팅
-    def SettingValue(self):
-        self.Fill = (
-            os.path.dirname(self.LayerPath) + "\\" + self.txtFill.text() + ".tif"
-        )
-        # self.Flat=os.path.dirname(self.LayerPath) + "\\"+ self.txtFlat.text()+ ".tif"
-        self.FD = os.path.dirname(self.LayerPath) + "\\" + self.txtFD.text() + ".tif"
-        self.FAC = os.path.dirname(self.LayerPath) + "\\" + self.txtFAC.text() + ".tif"
-        self.Slope = (
-            os.path.dirname(self.LayerPath) + "\\" + self.txtSlope.text() + ".tif"
-        )
-        self.Stream = (
-            os.path.dirname(self.LayerPath) + "\\" + self.txtStream.text() + ".tif"
-        )
-        self.Catchment = (
-            os.path.dirname(self.LayerPath) + "\\" + self.txtCatchment.text() + ".tif"
-        )
-        self.StreamVector = (
-            os.path.dirname(self.LayerPath)
-            + "\\"
-            + self.txtStreamVector.text()
-            + ".shp"
-        )
-        self.CellValue = int(self.txtCellValue.text())
+    def __setting_value(self):
+        self_values = [
+            "Fill",
+            "FD",
+            "FAC",
+            "Slope",
+            "Stream",
+            "Catchment",
+            "StreamVector",
+            "CellValue",
+        ]
+        textboxs = [
+            self.txtFill,
+            self.txtFD,
+            self.txtFAC,
+            self.txtSlope,
+            self.txtStream,
+            self.txtCatchment,
+            self.txtStreamVector,
+            self.txtCellValue,
+        ]
 
-    def CreateStreamVector(self):
+        for i in range(0, len(self_values)):
+            setattr(
+                self,
+                self_values[i],
+                os.path.dirname(self.LayerPath) + "\\" + textboxs[i].text() + ".tif",
+            )
+
+    def __create_stream_vector(self):
         self.outFiles = []
         self.outFiles.append(os.path.dirname(self.Fill) + "\\temp_1.tif")
         self.outFiles.append(os.path.dirname(self.Fill) + "\\temp_1.dat")
@@ -282,31 +264,14 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         return streamnet + args
 
     # 텍스트 박스에 파일 이름이 없는 경우 체크
-    def checkTextbox(self, txt):
+    def __error_empty_textbox(
+        self, txt: QLineEdit, err_msg: str = "A filename is required."
+    ):
         if txt.text() == "":
-            _util.MessageboxShowInfo("Batch Processor", " A filename is required. ")
             txt.setFocus()
-            return False
-        else:
-            return True
+            raise Exception(err_msg)
 
-    # 기본 변수 초기화
-    def Settingfile(self):
-        self.LayerPath = ""
-        self.Layername = ""
-        self.Fill = ""
-        self.Flat = ""
-        self.FD = ""
-        self.FAC = ""
-        self.Slope = ""
-        self.Stream = ""
-        self.CellValue = 0
-
-    # 프로그램 종료
-    def Close_Form(self):
-        self.close()
-
-    def ConvertTiff_To_Asc(self):
+    def __convert_tiff_to_asc(self):
         _util.Convert_TIFF_To_ASCii(self.Fill)
         # _util.Convert_TIFF_To_ASCii(self.Flat)
         _util.Convert_TIFF_To_ASCii(self.FD)
@@ -325,36 +290,3 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
 
     def setStreamChecked(self, event):
         self.chkStream.setChecked(not self.chkStream.isChecked())
-
-    def __init__(self, parent=None, iface=None):
-        """Constructor."""
-        super(BatchProcessor, self).__init__(parent)
-        self.setupUi(self)
-        self.iface = iface
-
-        Flat_Path = os.path.dirname(os.path.abspath(__file__))
-
-        # 파일 경로 변수 선언
-        self.Settingfile()
-
-        # 콤보 박스 레이어 셋팅
-        self.SetCombobox()
-
-        # 콤보 박스 선택 시 텍스트 창에 기본 파일 이름 적용
-        self.cmbLayer.currentIndexChanged.connect(self.SelectCombobox_event)
-
-        # OK버튼 눌렀을때 처리 부분
-        self.btnOK.clicked.connect(self.Click_Okbutton)
-        # self.btnOK.clicked.connect(self.CreateStreamVector)
-
-        # Cancle버튼 클릭 이벤트
-        self.btnCancel.clicked.connect(self.Close_Form)
-
-        # # 라디오 버튼 기본 설정
-        self.chkStream.stateChanged.connect(self.checkbox_Stream)
-        self.chkStream.setChecked(True)
-        self.checkbox_Stream()
-
-        # Stream chk와 label 연동
-        #         QObject.connect(self.lblStream, SIGNAL("clicked()"), self.setStreamChecked)
-        self.lblStream.mouseReleaseEvent = self.setStreamChecked
