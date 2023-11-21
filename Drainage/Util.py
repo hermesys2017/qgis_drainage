@@ -6,13 +6,7 @@ import subprocess
 import tempfile
 
 import win32api
-from qgis.core import (
-    QgsApplication,
-    QgsMapLayer,
-    QgsProject,
-    QgsRasterLayer,
-    QgsVectorLayer,
-)
+from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.PyQt.QtCore import QFileInfo
 from qgis.PyQt.QtWidgets import QComboBox, QMessageBox
 
@@ -67,13 +61,13 @@ class util(Singleton):
     def is_installed_gdal_for_taudem(self) -> bool:
         return os.path.isdir(self.get_gdal_path())
 
-    def add_gdal_path(self):
-        gdal_path = self.get_gdal_path()
-        os.environ["PATH"] = gdal_path + os.pathsep + os.environ["PATH"]
-
-    def remove_gdal_path(self):
-        gdal_path = self.get_gdal_path()
-        os.environ["PATH"] = os.environ["PATH"].replace(gdal_path + os.pathsep, "", 1)
+    def __get_plugin_env(self) -> dict:
+        """
+        cell 에디터에 맞는 PATH를 설정해주는 함수
+        """
+        env = os.environ.copy()
+        env["PATH"] = self.get_gdal_path() + os.pathsep + env["PATH"]
+        return env
 
     # Taudem path 받아 오기
     def GetTaudemPath(self):
@@ -89,6 +83,7 @@ class util(Singleton):
         value = subprocess.run(
             arg,
             shell=True,
+            env=self.__get_plugin_env(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             creationflags=subprocess.CREATE_NO_WINDOW,
@@ -589,7 +584,9 @@ class util(Singleton):
     def ASC_Header_nodata(self, asc_file):
         self.nodata = ""
         dataHeaderItems = open(asc_file).readlines()[:20]
-        read_lower = [item.lower() for item in dataHeaderItems]  # 리스트 의 모든 글자를 소문자화 시킴
+        read_lower = [
+            item.lower() for item in dataHeaderItems
+        ]  # 리스트 의 모든 글자를 소문자화 시킴
         for row in read_lower:
             if "nodata_value" in row:
                 self.nodata = row.replace("nodata_value", "").strip()
