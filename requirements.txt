@@ -8,12 +8,9 @@ pytest-cov
 
 # Linting and formatting
 pre-commit
-black
-isort
-mypy
+ruff
 flake8
 flake8-bugbear
-pep8-naming
 flake8-annotations
 flake8-qgis
 
