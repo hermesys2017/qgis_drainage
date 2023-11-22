@@ -25,14 +25,7 @@ import os
 from qgis.core import QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtCore import QFileInfo
-from qgis.PyQt.QtWidgets import (
-    QComboBox,
-    QDialog,
-    QFileDialog,
-    QGroupBox,
-    QMessageBox,
-    QTextEdit,
-)
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog, QGroupBox, QMessageBox, QTextEdit
 
 from drainage.ui.Watershed_dialog_base import Ui_WatershedDialogBase
 from drainage.Util import util
@@ -45,11 +38,14 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
     def __init__(self, parent=None):
         super(WatershedDialog, self).__init__(parent)
         self.setupUi(self)
+        self.__init_attr()
+        self.__init_qt()
+
+    def __init_attr(self):
         self.TifPath = ""
         self.Shape = ""
-        # 다이얼 로그 창 사이즈 조절 못하게 고정
-        #         self.setFixedSize(self.size())
 
+    def __init_qt(self):
         # LineEdit 컨트롤러 초기화
         self.txtOutput.clear()
 
@@ -69,6 +65,9 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
         # Cancle버튼 클릭 이벤트
         self.btnCancel.clicked.connect(self.Close_Form)
 
+        self.cmbLayers.currentIndexChanged.connect(self.__set_tif_path)
+        self.cmbShape.currentIndexChanged.connect(self.__set_shape)
+
     # 저장 위치 출력 다이얼 로그
     def Select_Ouput_File(self):
         self.txtOutput.clear()
@@ -83,13 +82,22 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
             )[0]
         self.txtOutput.setText(filename)
 
-    # 콤보 박스에서 선택한 레이어의 경로 받아오기
-    def Get_ComboBox_LayerPath(self, combo: QComboBox, txt: str) -> None:
-        if combo.currentIndex() != 0:
-            if txt == "tif":
-                self.TifPath = _util.GetcomboSelectedLayerPath(combo)
-            elif txt == "shp":
-                self.Shape = _util.GetcomboSelectedLayerPath(combo).split("|")[0]
+    def __set_tif_path(self, index: int) -> None:
+        if index == 0:
+            self.TifPath = ""
+            return
+        self.TifPath = self.__get_path_by_layer(self.cmbLayers.currentText())
+
+    def __set_shape(self, index: int) -> None:
+        if index == 0:
+            self.Shape = ""
+            return
+        self.Shape = self.__get_path_by_layer(self.cmbShape.currentText())
+
+    def __get_path_by_layer(self, layername: str) -> str:
+        layer = QgsProject.instance().mapLayersByName(layername)[0]
+        layer_path = layer.dataProvider().dataSourceUri()
+        return layer_path.split("|")[0]
 
     # 레이어 목록 Qgis에 올리기
     def Addlayer_OutputFile(self, outputpath):
@@ -102,9 +110,6 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
 
     @_util.error_decorator("Watershed")
     def Click_Okbutton(self, event):
-        self.Get_ComboBox_LayerPath(self.cmbLayers, "tif")
-        self.Get_ComboBox_LayerPath(self.cmbShape, "shp")
-
         # 콤보박스 레이어 선택 하지 않았을때
         Rindex = self.cmbLayers.currentIndex()
         Sindex = self.cmbShape.currentIndex()
