@@ -130,7 +130,7 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         return os.path.splitext(path)[1]
 
     @_util.error_decorator("Batch Processor")
-    def __click_ok_button(self, event):
+    def __click_ok_button(self, is_checked: bool):
         # 레이어 경로에 한글이 있으면 오류로 처리
         if _util.CheckKorea(self.LayerPath):
             raise Exception("The file path contains Korean.")
