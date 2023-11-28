@@ -21,9 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-import logging
 import os.path
-from datetime import datetime
 
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator, qVersion
@@ -66,17 +64,6 @@ class Drainage:
             raise EnvironmentError(
                 "GDAL is not installed. Please install GDAL with TauDEM."
             )
-
-        # initialize log
-        path = os.path.join(self.plugin_dir, "log")
-        os.makedirs(path, exist_ok=True)
-        logging.basicConfig(
-            filename=os.path.join(
-                path,
-                f"{datetime.now().strftime('%Y%m%d_%H%M%S_start')}.log",
-            ),
-            level=logging.DEBUG,
-        )
 
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
