@@ -22,6 +22,7 @@
 """
 import os
 
+from qgis.core import QgsMapLayer, QgsProject
 from qgis.PyQt.QtGui import QIntValidator
 from qgis.PyQt.QtWidgets import QDialog, QLineEdit
 
@@ -69,12 +70,11 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         """
         Setting combobox items
         """
-        layers = self._get_qgis_layer_list()
 
         # Add only raster layers to the combo box
         # layer.type() => 0: Vector, 1: Raster
-        raster_layers = [layer.name() for layer in layers if layer.type() == 1]
-        self._set_combobox_items(self.cmbLayer, raster_layers, "Select Layer")
+        layers: list[QgsMapLayer] = QgsProject.instance().mapLayers().values()
+        _util.SetCommbox(layers, self.cmbLayer, "tif")
 
     def __init_event_setting(self):
         """
