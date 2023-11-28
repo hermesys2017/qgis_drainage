@@ -56,20 +56,15 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
         _util.SetCommbox(layers, self.cmbLayers, "tif")
         _util.SetCommbox(layers, self.cmbShape, "shp")
 
-        # 다이얼 로그 버튼 눌렀을때 파일 저장 경로 설정 이벤트
-        self.btnOpenDialog.clicked.connect(self.Select_Ouput_File)
-
-        # OK버튼 눌렀을때 처리 부분
-        self.btnOK.clicked.connect(self.Click_Okbutton)
-
-        # Cancle버튼 클릭 이벤트
-        self.btnCancel.clicked.connect(self.Close_Form)
-
+        # Event
+        self.btnOpenDialog.clicked.connect(self.__select_output_file)
+        self.btnOK.clicked.connect(self.__click_ok_button)
+        self.btnCancel.clicked.connect(self.close)
         self.cmbLayers.currentIndexChanged.connect(self.__set_tif_path)
         self.cmbShape.currentIndexChanged.connect(self.__set_shape)
 
     # 저장 위치 출력 다이얼 로그
-    def Select_Ouput_File(self):
+    def __select_output_file(self):
         self.txtOutput.clear()
         dir = os.path.dirname(self.TifPath)
         if self.TifPath != "" and os.path.isdir(dir):
@@ -85,14 +80,14 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
     def __set_tif_path(self, index: int) -> None:
         if index == 0:
             self.TifPath = ""
-            return
-        self.TifPath = self.__get_path_by_layer(self.cmbLayers.currentText())
+        else:
+            self.TifPath = self.__get_path_by_layer(self.cmbLayers.currentText())
 
     def __set_shape(self, index: int) -> None:
         if index == 0:
             self.Shape = ""
-            return
-        self.Shape = self.__get_path_by_layer(self.cmbShape.currentText())
+        else:
+            self.Shape = self.__get_path_by_layer(self.cmbShape.currentText())
 
     def __get_path_by_layer(self, layername: str) -> str:
         layer = QgsProject.instance().mapLayersByName(layername)[0]
@@ -109,15 +104,14 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
             QgsProject.instance().addMapLayer(layer)
 
     @_util.error_decorator("Watershed")
-    def Click_Okbutton(self, event):
+    def __click_ok_button(self, is_checked: bool):
         # 콤보박스 레이어 선택 하지 않았을때
-        Rindex = self.cmbLayers.currentIndex()
-        Sindex = self.cmbShape.currentIndex()
+        raster_layer_index = self.cmbLayers.currentIndex()
+        shape_layer_index = self.cmbShape.currentIndex()
 
-        if Rindex == 0:
+        if raster_layer_index == 0:
             raise Exception("No raster layer selected.")
-
-        if Sindex == 0:
+        if shape_layer_index == 0:
             raise Exception("No shape layer selected.")
 
         # 텍스트 박스에 결과 파일 경로가 없을때 오류 메시지 출력
@@ -252,7 +246,3 @@ class WatershedDialog(QDialog, Ui_WatershedDialogBase):
         self.txtCSR_Point = QTextEdit(self.groupWidget1)
         self.txtCSR_Point.setGeometry(10, 15, 460, 105)
         self.txtCSR_Point.setText(self.scsr)
-
-    # 프로그램 종료
-    def Close_Form(self):
-        self.close()
