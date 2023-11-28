@@ -66,7 +66,14 @@ class util(Singleton):
         cell 에디터에 맞는 PATH를 설정해주는 함수
         """
         env = os.environ.copy()
-        env["PATH"] = self.get_gdal_path() + os.pathsep + env["PATH"]
+        env["GDAL_DATA"] = "C:\\Program Files\\GDAL\\gdal-data"
+        env["PATH"] = (
+            "C:\\GDAL"
+            + os.pathsep
+            + "C:\\Program Files\\GDAL"
+            + os.pathsep
+            + "C:\\Program Files\\TauDEM\\TauDEM5Exe"
+        )
         return env
 
     # Taudem path 받아 오기
@@ -88,10 +95,12 @@ class util(Singleton):
             stderr=subprocess.PIPE,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
-        self.__logger.info(f"Execute: {arg}")
+        self.__logger.info(
+            f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}\n"
+        )
         if value.returncode != 0:
             self.__logger.error(
-                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}"
+                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}\n"
             )
             raise Exception(f"Process run error: {arg}")
         return value.returncode
