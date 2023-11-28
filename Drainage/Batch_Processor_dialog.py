@@ -22,7 +22,6 @@
 """
 import os
 
-from qgis.core import QgsMapLayer, QgsProject
 from qgis.PyQt.QtGui import QIntValidator
 from qgis.PyQt.QtWidgets import QDialog, QLineEdit
 
@@ -50,6 +49,33 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         self.__setting_file()
         self.__set_combobox()
 
+    def __setting_file(self):
+        """
+        파일 경로 변수 선언
+        """
+        self.LayerPath = ""
+        self.Layername = ""
+        self.Fill = ""
+        self.Flat = ""
+        self.FD = ""
+        self.FAC = ""
+        self.Slope = ""
+        self.Stream = ""
+        self.CellValue = 0
+        self.Catchment = ""
+        self.StreamVector = ""
+
+    def __set_combobox(self):
+        """
+        Setting combobox items
+        """
+        layers = self._get_qgis_layer_list()
+
+        # Add only raster layers to the combo box
+        # layer.type() => 0: Vector, 1: Raster
+        raster_layers = [layer.name() for layer in layers if layer.type() == 1]
+        self._set_combobox_items(self.cmbLayer, raster_layers, "Select Layer")
+
     def __init_event_setting(self):
         """
         이벤트 세팅 구성
@@ -73,35 +99,11 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
 
     def __init_validator_setting(self):
         """
-        유효성 검사 세팅 구성
+        Configure the validator for the text box.
         """
         only_int = QIntValidator()
         self.txtCellValue.setValidator(only_int)
 
-    def __setting_file(self):
-        """
-        파일 경로 변수 선언
-        """
-        self.LayerPath = ""
-        self.Layername = ""
-        self.Fill = ""
-        self.Flat = ""
-        self.FD = ""
-        self.FAC = ""
-        self.Slope = ""
-        self.Stream = ""
-        self.CellValue = 0
-        self.Catchment = ""
-        self.StreamVector = ""
-
-    def __set_combobox(self):
-        """
-        콤보 박스 레이어 셋팅
-        """
-        layers: list[QgsMapLayer] = QgsProject.instance().mapLayers().values()
-        _util.SetCommbox(layers, self.cmbLayer, "tif")
-
-    # 콤보 박스 선택시 이벤트 처리
     def __select_combobox_event(self):
         index = self.cmbLayer.currentIndex()
         if index != 0:
