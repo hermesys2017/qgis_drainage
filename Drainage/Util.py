@@ -6,13 +6,7 @@ import subprocess
 import tempfile
 
 import win32api
-from qgis.core import (
-    QgsApplication,
-    QgsMapLayer,
-    QgsProject,
-    QgsRasterLayer,
-    QgsVectorLayer,
-)
+from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.PyQt.QtCore import QFileInfo
 from qgis.PyQt.QtWidgets import QComboBox, QMessageBox
 
@@ -67,13 +61,20 @@ class util(Singleton):
     def is_installed_gdal_for_taudem(self) -> bool:
         return os.path.isdir(self.get_gdal_path())
 
-    def add_gdal_path(self):
-        gdal_path = self.get_gdal_path()
-        os.environ["PATH"] += os.pathsep + gdal_path
-
-    def remove_gdal_path(self):
-        gdal_path = self.get_gdal_path()
-        os.environ["PATH"] = os.environ["PATH"].replace(os.pathsep + gdal_path, "", 1)
+    def __get_plugin_env(self) -> dict:
+        """
+        cell 에디터에 맞는 PATH를 설정해주는 함수
+        """
+        env = os.environ.copy()
+        env["GDAL_DATA"] = "C:\\Program Files\\GDAL\\gdal-data"
+        env["PATH"] = (
+            "C:\\GDAL"
+            + os.pathsep
+            + "C:\\Program Files\\GDAL"
+            + os.pathsep
+            + "C:\\Program Files\\TauDEM\\TauDEM5Exe"
+        )
+        return env
 
     # Taudem path 받아 오기
     def GetTaudemPath(self):
@@ -89,14 +90,17 @@ class util(Singleton):
         value = subprocess.run(
             arg,
             shell=True,
+            env=self.__get_plugin_env(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
-        self.__logger.info(f"Execute: {arg}")
+        self.__logger.info(
+            f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}\n"
+        )
         if value.returncode != 0:
             self.__logger.error(
-                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}"
+                f"Execute: {arg}\nstdout: {value.stdout}\nstderr: {value.stderr}\n"
             )
             raise Exception(f"Process run error: {arg}")
         return value.returncode
@@ -589,7 +593,9 @@ class util(Singleton):
     def ASC_Header_nodata(self, asc_file):
         self.nodata = ""
         dataHeaderItems = open(asc_file).readlines()[:20]
-        read_lower = [item.lower() for item in dataHeaderItems]  # 리스트 의 모든 글자를 소문자화 시킴
+        read_lower = [
+            item.lower() for item in dataHeaderItems
+        ]  # 리스트 의 모든 글자를 소문자화 시킴
         for row in read_lower:
             if "nodata_value" in row:
                 self.nodata = row.replace("nodata_value", "").strip()

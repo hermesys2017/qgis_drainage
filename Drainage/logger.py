@@ -13,6 +13,8 @@ def init_logger() -> None:
     )
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
+
+    # File Handler : Debug
     path = os.path.join(os.path.dirname(__file__), "log")
     os.makedirs(path, exist_ok=True)
     file_handler = logging.FileHandler(
@@ -26,6 +28,7 @@ def init_logger() -> None:
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # File Handler : Error
     error_file_handler = logging.FileHandler(
         os.path.join(
             path,

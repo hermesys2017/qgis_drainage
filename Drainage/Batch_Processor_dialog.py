@@ -50,6 +50,32 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         self.__setting_file()
         self.__set_combobox()
 
+    def __setting_file(self):
+        """
+        파일 경로 변수 선언
+        """
+        self.LayerPath = ""
+        self.Layername = ""
+        self.Fill = ""
+        self.Flat = ""
+        self.FD = ""
+        self.FAC = ""
+        self.Slope = ""
+        self.Stream = ""
+        self.CellValue = 0
+        self.Catchment = ""
+        self.StreamVector = ""
+
+    def __set_combobox(self):
+        """
+        Setting combobox items
+        """
+
+        # Add only raster layers to the combo box
+        # layer.type() => 0: Vector, 1: Raster
+        layers: list[QgsMapLayer] = QgsProject.instance().mapLayers().values()
+        _util.SetCommbox(layers, self.cmbLayer, "tif")
+
     def __init_event_setting(self):
         """
         이벤트 세팅 구성
@@ -73,35 +99,11 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
 
     def __init_validator_setting(self):
         """
-        유효성 검사 세팅 구성
+        Configure the validator for the text box.
         """
         only_int = QIntValidator()
         self.txtCellValue.setValidator(only_int)
 
-    def __setting_file(self):
-        """
-        파일 경로 변수 선언
-        """
-        self.LayerPath = ""
-        self.Layername = ""
-        self.Fill = ""
-        self.Flat = ""
-        self.FD = ""
-        self.FAC = ""
-        self.Slope = ""
-        self.Stream = ""
-        self.CellValue = 0
-        self.Catchment = ""
-        self.StreamVector = ""
-
-    def __set_combobox(self):
-        """
-        콤보 박스 레이어 셋팅
-        """
-        layers: list[QgsMapLayer] = QgsProject.instance().mapLayers().values()
-        _util.SetCommbox(layers, self.cmbLayer, "tif")
-
-    # 콤보 박스 선택시 이벤트 처리
     def __select_combobox_event(self):
         index = self.cmbLayer.currentIndex()
         if index != 0:
@@ -130,7 +132,7 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         return os.path.splitext(path)[1]
 
     @_util.error_decorator("Batch Processor")
-    def __click_ok_button(self, event):
+    def __click_ok_button(self, is_checked: bool):
         # 레이어 경로에 한글이 있으면 오류로 처리
         if _util.CheckKorea(self.LayerPath):
             raise Exception("The file path contains Korean.")

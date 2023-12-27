@@ -21,11 +21,8 @@
  *                                                                         *
  ***************************************************************************/
 """
-import logging
 import os.path
-from datetime import datetime
 
-from qgis.core import Qgis
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator, qVersion
 from qgis.PyQt.QtGui import QIcon
@@ -68,20 +65,6 @@ class Drainage:
                 "GDAL is not installed. Please install GDAL with TauDEM."
             )
 
-        # add gdal path in environment variable
-        _util.add_gdal_path()
-
-        # initialize log
-        path = os.path.join(self.plugin_dir, "log")
-        os.makedirs(path, exist_ok=True)
-        logging.basicConfig(
-            filename=os.path.join(
-                path,
-                f"{datetime.now().strftime('%Y%m%d_%H%M%S_start')}.log",
-            ),
-            level=logging.DEBUG,
-        )
-
         # initialize locale
         locale = QSettings().value("locale/userLocale")[0:2]
         locale_path = os.path.join(
@@ -106,7 +89,6 @@ class Drainage:
         # Add toolbar button and menu item
         self.dlg = DrainageDockWidget(iface=self.iface)
         self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
-        self.dlg.hide()  # 숨긴상태로 실행
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -216,7 +198,6 @@ class Drainage:
             self.iface.removePluginMenu(self.tr("&Drainage"), action)
             self.iface.removeToolBarIcon(action)
 
-        util().remove_gdal_path()
         self.iface.removeDockWidget(self.dlg)
         del self.dlg
         unload_logger()
