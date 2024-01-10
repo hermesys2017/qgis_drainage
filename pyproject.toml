@@ -57,5 +57,4 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=grm --cov-report html"
 testpaths = "tests"

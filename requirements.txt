@@ -3,6 +3,7 @@ pb_tool
 
 # Testing
 pytest
+pytest-qt
 pytest-cov
 # pytest-qgis
 
