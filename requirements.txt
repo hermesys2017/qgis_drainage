@@ -4,13 +4,14 @@ pb_tool
 # Testing
 pytest
 pytest-cov
-# pytest-qgis
+pytest-qgis
 
 # Linting and formatting
 pre-commit
 ruff
 flake8
 flake8-bugbear
+pep8-naming
 flake8-annotations
 flake8-qgis
 

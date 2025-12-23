@@ -59,3 +59,8 @@ line-ending = "auto"
 [tool.pytest.ini_options]
 addopts = "-v --cov=grm --cov-report html"
 testpaths = "tests"
+
+[tool.qgis-plugin-ci]
+plugin_path = "Drainage"
+github_organization_slug = "HermeSys"
+project_slug = "Drainage"
