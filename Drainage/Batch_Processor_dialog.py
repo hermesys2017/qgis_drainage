@@ -56,15 +56,15 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         """
         self.LayerPath = ""
         self.Layername = ""
-        self.Fill = ""
-        self.Flat = ""
-        self.FD = ""
-        self.FAC = ""
-        self.Slope = ""
-        self.Stream = ""
-        self.CellValue = 0
-        self.Catchment = ""
-        self.StreamVector = ""
+        self.fpnFilledDEM = ""
+        self.fpnFlatArea = ""
+        self.fpnFD = ""
+        self.fpnFAC = ""
+        self.fpnSlope = ""
+        self.fpnStream = ""
+        self.thresholdValueForStream = 0
+        self.fpnCatchment = ""
+        self.fpnStreamVector = ""
 
     def __set_combobox(self):
         """
@@ -102,14 +102,14 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
         Configure the validator for the text box.
         """
         only_int = QIntValidator()
-        self.txtCellValue.setValidator(only_int)
+        self.txtThresholdValueForStream.setValidator(only_int)
 
     def __select_combobox_event(self):
         index = self.cmbLayer.currentIndex()
         if index != 0:
             self.LayerPath = _util.GetcomboSelectedLayerPath(self.cmbLayer)
             self.Layername = _util.GetFilename(self.LayerPath)
-            self.txtFill.setText(self.Layername + "_Hydro")
+            self.txtFilledDEM.setText(self.Layername + "_Filled")
             self.txtFD.setText(self.Layername + "_Fdr")
             self.txtFAC.setText(self.Layername + "_Fac")
             self.txtSlope.setText(self.Layername + "_Slope")
@@ -147,16 +147,16 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
             raise Exception("Only ASCII files and TIF file formats are supported.")
 
         # 비어있는 텍스트 박스 체크
-        self.__error_empty_textbox(self.txtFill, "Fill Sink is required.")
-        self.__error_empty_textbox(self.txtFD, "Flow Direction is required.")
-        self.__error_empty_textbox(self.txtFAC, "Flow Accumulation is required.")
-        self.__error_empty_textbox(self.txtSlope, "Slope is required.")
-        self.__error_empty_textbox(self.txtStream, "Stream Raster file is required.")
-        self.__error_empty_textbox(self.txtCellValue, "Threshold Value is required.")
+        self.__error_empty_textbox(self.txtFilledDEM, "Sink filled DEM file name is required.")
+        self.__error_empty_textbox(self.txtFD, "Flow direction file name is required.")
+        self.__error_empty_textbox(self.txtFAC, "Flow accumulation file name is required.")
+        self.__error_empty_textbox(self.txtSlope, "Slope file name is required.")
+        self.__error_empty_textbox(self.txtStream, "Stream raster file name is required.")
+        self.__error_empty_textbox(self.txtThresholdValueForStream, "Threshold value is required.")
         self.__error_empty_textbox(self.txtCatchment, "Catchment is required.")
         if self.chkStream.isChecked():
             self.__error_empty_textbox(
-                self.txtStreamVector, "Make polyline is required."
+                self.txtStreamVector, "Stream polyline layer name is required."
             )
 
         # 파일 경로 변수에 셋팅
@@ -164,26 +164,26 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
 
         # Fill sink 시작
         arg = _util.GetTaudemArg(
-            self.LayerPath, self.Fill, _util.tauDEMCommand.SK, False, 0
+            self.LayerPath, self.fpnFilledDEM, _util.tauDEMCommand.SK, False, 0
         )
         _util.Execute(arg)
 
         # FD 시작
-        arg = _util.GetTaudemArg(self.Fill, self.FD, _util.tauDEMCommand.FD, False, 0)
+        arg = _util.GetTaudemArg(self.fpnFilledDEM, self.fpnFD, _util.tauDEMCommand.FD, False, 0)
         _util.Execute(arg)
         # FA 시작
-        arg = _util.GetTaudemArg(self.FD, self.FAC, _util.tauDEMCommand.FA, False, 0)
+        arg = _util.GetTaudemArg(self.fpnFD, self.fpnFAC, _util.tauDEMCommand.FA, False, 0)
         _util.Execute(arg)
         # Slope 시작
         arg = _util.GetTaudemArg(
-            self.Fill, self.Slope, _util.tauDEMCommand.SG, False, 0
+            self.fpnFilledDEM, self.fpnSlope, _util.tauDEMCommand.SG, False, 0
         )
         _util.Execute(arg)
         # Stream 시작
-        cell_value = self.txtCellValue.text()
+        cell_value = self.txtThresholdValueForStream.text()
         arg = _util.GetTaudemArg(
-            self.FAC,
-            self.Stream,
+            self.fpnFAC,
+            self.fpnStream,
             _util.tauDEMCommand.ST,
             False,
             cell_value,
@@ -213,48 +213,30 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
 
     # 파일 경로 변수에 셋팅
     def __setting_value(self):
-        self_values = [
-            "Fill",
-            "FD",
-            "FAC",
-            "Slope",
-            "Stream",
-            "Catchment",
-            "StreamVector",
-            "CellValue",
-        ]
-        textboxs = [
-            self.txtFill,
-            self.txtFD,
-            self.txtFAC,
-            self.txtSlope,
-            self.txtStream,
-            self.txtCatchment,
-            self.txtStreamVector,
-            self.txtCellValue,
-        ]
-
-        for i in range(0, len(self_values)):
-            setattr(
-                self,
-                self_values[i],
-                os.path.dirname(self.LayerPath) + "\\" + textboxs[i].text() + ".tif",
-            )
+        pathString =os.path.dirname(self.LayerPath) + "\\"
+        self.fpnFilledDEM = pathString + self.txtFilledDEM.text()  + ".tif"
+        self.fpnFD = pathString + self.txtFD.text() + ".tif"
+        self.fpnFAC = pathString + self.txtFAC.text() + ".tif"
+        self.fpnSlope = pathString + self.txtSlope.text() + ".tif"
+        self.fpnStream = pathString + self.txtStream.text() + ".tif"
+        self.fpnCatchment = pathString + self.txtCatchment.text() + ".tif"
+        self.fpnStreamVector = pathString + self.txtStreamVector.text() + ".shp"
+        self.thresholdValueForStream = pathString + self.txtThresholdValueForStream.text()
 
     def __create_stream_vector(self):
         self.outFiles = []
-        self.outFiles.append(os.path.dirname(self.Fill) + "\\temp_1.tif")
-        self.outFiles.append(os.path.dirname(self.Fill) + "\\temp_1.dat")
-        self.outFiles.append(os.path.dirname(self.Fill) + "\\temp_2.dat")
+        self.outFiles.append(os.path.dirname(self.fpnFilledDEM) + "\\temp_1.tif")
+        self.outFiles.append(os.path.dirname(self.fpnFilledDEM) + "\\temp_1.dat")
+        self.outFiles.append(os.path.dirname(self.fpnFilledDEM) + "\\temp_2.dat")
         # outFiles3 = "C:\GRM\Sample\Gyeongpoho_DEM_Stream.shp"
-        self.outFiles.append(self.StreamVector)
+        self.outFiles.append(self.fpnStreamVector)
         # outFiles4 = os.path.dirname(self.Fill) + "\\temp_2.tif"
-        self.outFiles.append(self.Catchment)
+        self.outFiles.append(self.fpnCatchment)
         args = ' -fel "{0}" -p "{1}" -ad8 "{2}" -src "{3}" -ord "{4}" -tree "{5}" -coord "{6}" -net "{7}" -w "{8}" '.format(
-            self.Fill,
-            self.FD,
-            self.FAC,
-            self.Stream,
+            self.fpnFilledDEM,
+            self.fpnFD,
+            self.fpnFAC,
+            self.fpnStream,
             self.outFiles[0],
             self.outFiles[1],
             self.outFiles[2],
@@ -274,15 +256,15 @@ class BatchProcessor(QDialog, Ui_WatershedDialogBase):
             raise Exception(err_msg)
 
     def __convert_tiff_to_asc(self):
-        _util.Convert_TIFF_To_ASCii(self.Fill)
+        _util.Convert_TIFF_To_ASCii(self.fpnFilledDEM)
         # _util.Convert_TIFF_To_ASCii(self.Flat)
-        _util.Convert_TIFF_To_ASCii(self.FD)
-        _util.Convert_TIFF_To_ASCii(self.FAC)
-        _util.Convert_TIFF_To_ASCii(self.Slope)
-        _util.Convert_TIFF_To_ASCii(self.Stream)
+        _util.Convert_TIFF_To_ASCii(self.fpnFD)
+        _util.Convert_TIFF_To_ASCii(self.fpnFAC)
+        _util.Convert_TIFF_To_ASCii(self.fpnSlope)
+        _util.Convert_TIFF_To_ASCii(self.fpnStream)
         if self.chkStream.isChecked():
-            _util.VectorLayer_AddLayer(self.StreamVector)
-        _util.Convert_TIFF_To_ASCii(self.Catchment)
+            _util.VectorLayer_AddLayer(self.fpnStreamVector)
+        _util.Convert_TIFF_To_ASCii(self.fpnCatchment)
 
     def checkbox_Stream(self):
         if self.chkStream.isChecked():

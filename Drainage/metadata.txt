@@ -8,11 +8,11 @@
 
 [general]
 name=Drainage
-qgisMinimumVersion=3.10
+qgisMinimumVersion=3.24
 qgisMaximumVersion=3.99
 description=the hydro DEM analysis with the TauDEM
 about=Drainage is a plugin for the hydro DEM analysis with the TauDEM. It can produce the No-sink-DEM, FD(Flow Direction , D8), FA(Flow Accumulation), Stream and watershed. 
-version=3.40.1
+version=0.2.1
 author=KICT, Hermesys
 email=info@hermesys.co.kr
 
@@ -23,7 +23,7 @@ email=info@hermesys.co.kr
 
 # Uncomment the following line and add your changelog:
 changelog=
-      3.40.1
+      0.2.1
         - Revision and tested for QGIS 3.24 and 3.40
       0.2.0
         - Change env setting method
