@@ -61,6 +61,6 @@ addopts = "-v --cov=grm --cov-report html"
 testpaths = "tests"
 
 [tool.qgis-plugin-ci]
-plugin_path = "Drainage"
+plugin_path = "drainage"
 github_organization_slug = "HermeSys"
-project_slug = "Drainage"
+project_slug = "drainage"
