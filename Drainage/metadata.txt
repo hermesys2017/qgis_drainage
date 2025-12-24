@@ -46,9 +46,9 @@ changelog=
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=https://github.com/floodmodel/Plugin_repository_QGIS3.10
-tracker=https://github.com/floodmodel/Plugin_repository_QGIS3.10/issues
-repository=https://github.com/floodmodel/Plugin_repository_QGIS3.10.git
+homepage=https://github.com/hermesys2017/qgis_drainage
+tracker=https://github.com/hermesys2017/qgis_drainage/issues
+repository=https://github.com/hermesys2017/qgis_drainage.git
 category=Plugins
 icon=icon.png
 
